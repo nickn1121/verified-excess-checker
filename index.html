@@ -90,7 +90,7 @@
   <textarea id="parts" placeholder="e.g.
 ST4617EUE
 MAX2100+T"></textarea>
-  <button id="check-btn">🔍 Check Excess</button>
+  <button id="check-btn">🔍 Check Excess Lists</button>
 
   <div id="result-box"></div>
 
@@ -121,7 +121,16 @@ MAX2100+T"></textarea>
         });
 
         const resultText = await response.text();
-        resultBox.innerHTML = resultText.replace(/\n/g, "<br>").replace(/\t/g, "&emsp;");
+        const cleaned = resultText
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line !== "");
+
+        if (cleaned.length === 0) {
+          resultBox.innerHTML = "• No matching parts found.";
+        } else {
+          resultBox.innerHTML = cleaned.join("<br>");
+        }
       } catch (err) {
         resultBox.innerText = "⚠️ Something went wrong. Please try again later.";
         console.error(err);
@@ -131,6 +140,7 @@ MAX2100+T"></textarea>
 
 </body>
 </html>
+
 
 
 
