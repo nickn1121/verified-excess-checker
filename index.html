@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Excess Part Number Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,21 +11,24 @@
       padding: 40px;
       max-width: 600px;
       margin: auto;
-    }
-
-    .logo {
       text-align: center;
-      margin-bottom: 30px;
     }
 
-    .logo img {
-      max-width: 240px;
+    img.logo {
+      max-width: 220px;
       height: auto;
+      margin-bottom: 20px;
     }
 
     h1 {
-      text-align: center;
+      font-size: 28px;
       color: #333;
+    }
+
+    label {
+      display: block;
+      margin: 20px 0 8px;
+      font-weight: bold;
     }
 
     textarea {
@@ -37,38 +40,32 @@
       border-radius: 6px;
       resize: vertical;
       box-sizing: border-box;
-      margin-top: 12px;
     }
 
     button {
-      display: block;
-      width: 100%;
-      padding: 14px;
       margin-top: 20px;
-      font-size: 16px;
-      background-color: #6a0dad;
+      background-color: #4CAF50;
       color: white;
+      padding: 12px 20px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
 
     button:hover {
-      background-color: #5a0cb5;
+      background-color: #45a049;
     }
 
     .footer {
-      text-align: center;
-      margin-top: 40px;
-      color: #777;
+      margin-top: 30px;
       font-size: 14px;
+      color: #888;
     }
   </style>
 </head>
 <body>
-  <div class="logo">
-    <img src="https://verifiedelectronics.com/wp-content/uploads/2025/05/Logo_color_transparent-1.png" alt="Verified Electronics Logo">
-  </div>
+  <img src="Logo_color_white_background (2).png" alt="Verified Electronics Logo" class="logo" />
 
   <h1>✅ Excess Part Number Checker</h1>
 
@@ -77,13 +74,14 @@
     <textarea id="parts" name="parts" placeholder="e.g.
 MAX4617EUE+
 MAX4617EUE+T"></textarea>
-    <button type="submit">🔍 Check Excess</button>
+    <button type="submit">🔍 Submit to Make</button>
   </form>
 
   <div class="footer">
-    Powered by Verified Electronics · Made By Nick
+    Powered by Verified Electronics · Made By Nick 
   </div>
 </body>
 </html>
+
 
 
