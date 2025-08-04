@@ -13,6 +13,16 @@
       margin: auto;
     }
 
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo img {
+      max-width: 240px;
+      height: auto;
+    }
+
     h1 {
       text-align: center;
       color: #333;
@@ -32,30 +42,36 @@
 
     button {
       display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      background-color: #0078d4;
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      font-size: 16px;
+      background-color: #6a0dad;
       color: white;
       border: none;
-      border-radius: 4px;
-      font-size: 16px;
+      border-radius: 6px;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #005fa3;
+      background-color: #5a0cb5;
     }
 
     .footer {
       text-align: center;
       margin-top: 40px;
-      font-size: 12px;
-      color: #999;
+      color: #777;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
+  <div class="logo">
+    <img src="https://verifiedelectronics.com/wp-content/uploads/2025/05/Logo_color_transparent-1.png" alt="Verified Electronics Logo">
+  </div>
+
   <h1>✅ Excess Part Number Checker</h1>
+
   <form method="POST" action="https://hook.eu2.make.com/tuj1q8azymm5zae23n3v5bfb64w3aqd0">
     <label for="parts">Paste your part numbers (one per line):</label>
     <textarea id="parts" name="parts" placeholder="e.g.
@@ -65,8 +81,9 @@ MAX4617EUE+T"></textarea>
   </form>
 
   <div class="footer">
-    Powered by Verified Electronics · By Nick N
+    Powered by Verified Electronics · Made By Nick
   </div>
 </body>
 </html>
+
 
