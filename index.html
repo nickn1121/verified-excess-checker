@@ -120,7 +120,7 @@ MAX2100+T"></textarea>
           body: JSON.stringify({ parts: input })
         });
 
-        const rawText = await response.text();
+        const rawText = (await response.text()).trim();
         const lines = rawText.split('\n').map(line => line.trim());
 
         const filtered = [];
@@ -128,7 +128,7 @@ MAX2100+T"></textarea>
 
         for (const line of lines) {
           if (line === "") {
-            if (currentBlock.length >= 2) {
+            if (currentBlock.length >= 1) {
               filtered.push(currentBlock.join("<br>"));
             }
             currentBlock = [];
@@ -137,14 +137,14 @@ MAX2100+T"></textarea>
           }
         }
 
-        if (currentBlock.length >= 2) {
+        if (currentBlock.length >= 1) {
           filtered.push(currentBlock.join("<br>"));
         }
 
         if (filtered.length === 0) {
           resultBox.innerHTML = "❌ No matching parts found.";
         } else {
-          resultBox.innerHTML = filtered.join("<br><br>");
+          resultBox.innerHTML = `✅ Found ${filtered.length} matching part(s):<br><br>` + filtered.join("<br><br>");
         }
 
       } catch (err) {
@@ -156,6 +156,7 @@ MAX2100+T"></textarea>
 
 </body>
 </html>
+
 
 
 
