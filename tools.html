@@ -5,6 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f8f9fa;
@@ -14,7 +18,7 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
     }
 
@@ -23,53 +27,74 @@
       max-width: 180px;
       margin: 0 auto 30px;
       border-radius: 12px;
-      box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0px 0px 8px rgba(126, 46, 235, 0.2);
     }
 
     h1 {
       text-align: center;
       font-size: 28px;
       margin-bottom: 40px;
+      color: #4d2c91;
     }
 
-    h2 {
-      margin-top: 40px;
-      margin-bottom: 20px;
-      font-size: 22px;
-      color: #444;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 5px;
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
     }
 
-    .tool-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
-
-    .tool {
+    .category {
+      flex: 1 1 250px;
       background: white;
-      border: 1px solid #ddd;
-      border-radius: 10px;
+      border: 2px solid #7E2EEB;
+      border-radius: 12px;
       padding: 20px;
-      font-size: 18px;
-      text-align: center;
-      text-decoration: none;
-      color: #333;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 3px 10px rgba(126, 46, 235, 0.05);
+      min-width: 250px;
+      transition: box-shadow 0.3s ease;
     }
 
-    .tool:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      background: #f4f4f4;
+    .category:hover {
+      box-shadow: 0 4px 16px rgba(126, 46, 235, 0.15);
     }
 
-    .emoji {
-      font-size: 24px;
+    .category h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #7E2EEB;
+    }
+
+    .tool-button {
       display: block;
-      margin-bottom: 5px;
+      background: #f9f7ff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      text-align: left;
+      font-size: 16px;
+      color: #4d2c91;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .tool-button:hover {
+      background: #ede4ff;
+      transform: translateX(4px);
+    }
+
+    @media (max-width: 900px) {
+      .dashboard {
+        flex-direction: column;
+        align-items: stretch;
+      }
     }
   </style>
 </head>
@@ -80,39 +105,34 @@
     <img src="logo.png" alt="Verified Electronics Logo" class="logo" />
     <h1>🔧 Verified Electronics – Internal Tools</h1>
 
-    <!-- Excess Tools -->
-    <h2>🟪 Excess</h2>
-    <div class="tool-grid">
-      <a class="tool" href="index.html">
-        <span class="emoji">📦</span>
-        Excess Part Checker
-      </a>
-    </div>
+    <div class="dashboard">
 
-    <!-- Sales Tools -->
-    <h2>🟦 Sales</h2>
-    <div class="tool-grid">
-      <a class="tool" href="sales-leaderboard.html">
-        <span class="emoji">📈</span>
-        Sales Leaderboard
-      </a>
-      <a class="tool" href="#">
-        <span class="emoji">📝</span>
-        Sales Tracker (coming soon)
-      </a>
-    </div>
+      <!-- Excess Column -->
+      <div class="category">
+        <h2>🟪 Excess</h2>
+        <a class="tool-button" href="index.html">📦 Excess Part Checker</a>
+      </div>
 
-    <!-- Stats Tools -->
-    <h2>🟨 Stats</h2>
-    <div class="tool-grid">
-      <a class="tool" href="call-stats.html">
-        <span class="emoji">📞</span>
-        Call Stats
-      </a>
-      <a class="tool" href="email-stats.html">
-        <span class="emoji">📧</span>
-        Email Stats
-      </a>
+      <!-- Sales Column -->
+      <div class="category">
+        <h2>🟦 Sales</h2>
+        <a class="tool-button" href="sales-leaderboard.html">📈 Sales Leaderboard</a>
+        <a class="tool-button" href="#">📝 Sales Tracker (coming soon)</a>
+      </div>
+
+      <!-- Stats Column -->
+      <div class="category">
+        <h2>🟨 Stats</h2>
+        <a class="tool-button" href="call-stats.html">📞 Call Stats</a>
+        <a class="tool-button" href="email-stats.html">📧 Email Stats</a>
+      </div>
+
+      <!-- Parts Column -->
+      <div class="category">
+        <h2>🟧 Parts</h2>
+        <a class="tool-button" href="website-prices.html">💲 Website Prices</a>
+      </div>
+
     </div>
 
   </div>
@@ -134,6 +154,7 @@
   </script>
 </body>
 </html>
+
 
 
 
