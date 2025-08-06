@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Internal Tools – Verified Electronics</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 50px;
+    }
+    img.logo {
+      max-width: 220px;
+      height: auto;
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .tool {
+      display: block;
+      margin: 15px auto;
+      padding: 15px 25px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      width: 300px;
+      font-size: 18px;
+      text-decoration: none;
+      color: #333;
+    }
+    .tool:hover {
+      background: #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo at the top -->
+  <img src="logo.png" alt="Verified Electronics Logo" class="logo" />
+
+  <h1>🔧 Verified Electronics – Internal Tools</h1>
+
+  <!-- Tool Links -->
+  <a class="tool" href="index.html">📦 Excess Part Checker</a>
+  <a class="tool" href="sales-leaderboard.html">📈 Sales Leaderboard</a>
+  <a class="tool" href="#">📝 Sales Tracker (coming soon)</a>
+
+  <!-- Password Protection Script -->
+  <script>
+    const PASSWORD = "verified123"; // Change this password
+    const stored = localStorage.getItem("ve_tools_access");
+
+    if (stored !== PASSWORD) {
+      const entered = prompt("Enter password to access tools:");
+      if (entered === PASSWORD) {
+        localStorage.setItem("ve_tools_access", PASSWORD);
+      } else {
+        alert("Access denied.");
+        window.location.href = "https://google.com";
+      }
+    }
+  </script>
+</body>
+</html>
