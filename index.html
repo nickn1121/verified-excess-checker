@@ -116,15 +116,21 @@
       0% { transform: rotate(0deg);}
       100% { transform: rotate(360deg);}
     }
+
+    footer {
+      margin-top: 40px;
+      color: #aaa;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
-  <img src="logo.png" alt="Verified Logo" class="logo" />
+  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Verified Logo" class="logo" />
   <h1>✅ Excess Part Number Checker</h1>
   <p><strong>Paste your part numbers (one per line):</strong></p>
 
   <div class="stats-box" id="live-stats">
-    <strong>Loading stats...</strong>
+    <strong>📊 Loading live stats...</strong>
   </div>
 
   <textarea id="partNumbers" placeholder="Paste or type part numbers here..."></textarea>
@@ -139,6 +145,10 @@
 
   <button id="exportBtn" style="margin-top: 20px; display:none;">⬇ Export to CSV</button>
   <button class="toggle-btn" id="toggleMode">Toggle Dark Mode</button>
+
+  <footer>
+    Powered by Verified Electronics · Made By Nick
+  </footer>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -156,11 +166,10 @@
     const exportBtn = document.getElementById('exportBtn');
     const statsBox = document.getElementById('live-stats');
 
-    // Live stats leaderboard on page load
     async function loadStats() {
       const { data, error } = await supabase.from('excess_parts').select('part_number, vendor');
       if (error) {
-        statsBox.innerHTML = "<p>Error loading stats.</p>";
+        statsBox.innerHTML = "<p>❌ Error loading stats.</p>";
         return;
       }
 
@@ -176,7 +185,6 @@
 
     loadStats();
 
-    // Search logic
     async function fetchExcess(partNumbers) {
       const { data, error } = await supabase.from('excess_parts').select('*');
       if (error) {
@@ -251,6 +259,7 @@
   </script>
 </body>
 </html>
+
 
 
 
