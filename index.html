@@ -2,180 +2,191 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Excess Part Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Excess Part Number Checker</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      background-color: #f9fafb;
-      color: #1f2937;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-    textarea {
-      width: 100%;
-      max-width: 600px;
-      height: 160px;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 16px;
-      margin-bottom: 16px;
-    }
-    input[type="file"] {
-      margin: 10px auto;
-    }
-    .upload-instructions {
-      font-size: 14px;
-      color: #555;
-      max-width: 600px;
-      margin: 10px auto;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      padding: 30px;
+      max-width: 700px;
+      margin: auto;
       text-align: center;
     }
+    img.logo {
+      max-width: 220px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+    textarea, input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
     button {
-      background-color: #4f46e5;
+      background-color: #6a42d6;
       color: white;
+      border: none;
       padding: 12px 24px;
       font-size: 16px;
-      border: none;
-      border-radius: 6px;
+      margin-top: 15px;
       cursor: pointer;
+      border-radius: 6px;
+    }
+    .result, .summary {
+      background: #fff;
+      margin: 20px auto;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: left;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .loading {
+      font-style: italic;
       margin-top: 10px;
+      display: none;
     }
-    button:hover {
-      background-color: #4338ca;
+    .dark-mode {
+      background-color: #121212;
+      color: #eee;
     }
-    .result-card {
-      background: white;
-      padding: 16px;
-      margin-top: 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      max-width: 600px;
+    .dark-mode textarea, .dark-mode .result {
+      background: #1e1e1e;
+      color: #eee;
     }
-    .result-card strong {
-      font-size: 18px;
-      display: block;
-      margin-bottom: 4px;
+    .dark-mode button {
+      background-color: #915eff;
     }
-    .footer {
-      margin-top: 40px;
+    .toggle-dark {
+      margin-top: 10px;
+      display: inline-block;
       font-size: 14px;
-      color: #6b7280;
+      color: #666;
+      cursor: pointer;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>Excess Part Number Checker</h1>
 
-  <!-- ✅ CSV Upload Input -->
+  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" class="logo" alt="Verified Electronics Logo">
+
+  <h1>✅ Excess Part Number Checker</h1>
+  <p><strong>Paste your part numbers (one per line):</strong></p>
+  <textarea id="input" rows="6" placeholder="Example:\nMCP1623T-I/CHY\nPS-65-24"></textarea>
+  
   <input type="file" id="csvUpload" accept=".csv" />
-  <div class="upload-instructions">
-    Upload a <code>.csv</code> file with a single column called <strong>part_number</strong>.<br>
-    Other columns will be ignored.
-  </div>
+  <p><small>CSV must contain a column with header <code>Part Number</code></small></p>
 
-  <!-- ✅ Textarea input still supported -->
-  <textarea id="parts" placeholder="Or paste part numbers here, one per line..."></textarea>
-
-  <button id="searchBtn">Search</button>
+  <button onclick="searchParts()">🔍 Check Excess</button>
+  <div class="loading" id="loading">🔄 Searching...</div>
+  
+  <div id="summary" class="summary"></div>
   <div id="results"></div>
-  <div class="footer">Powered by Verified Electronics</div>
 
-  <script type="module">
-    const apiUrl = "https://ijzroisggstqkfhpjndq.supabase.co";
-    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc";
+  <button onclick="exportResults()">⬇ Export to CSV</button>
 
-    // 🔁 Fuzzy string similarity (basic)
-    const stringSimilarity = (a, b) => {
-      a = a.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      b = b.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      let matches = 0;
-      for (let i = 0; i < Math.min(a.length, b.length); i++) {
-        if (a[i] === b[i]) matches++;
-      }
-      return Math.round((matches / Math.max(a.length, b.length)) * 100);
-    };
+  <div class="toggle-dark" onclick="toggleDark()">Toggle Dark Mode</div>
 
-    // ✅ Run search
-    document.getElementById("searchBtn").addEventListener("click", async () => {
-      const input = document.getElementById("parts").value;
-      const parts = input.split('\\n').map(p => p.trim()).filter(p => p !== "");
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "<p>Searching...</p>";
+  <script>
+    let resultsData = [];
 
-      const matches = [];
+    function toggleDark() {
+      document.body.classList.toggle("dark-mode");
+    }
 
-      for (const part of parts) {
-        const cleaned = part.replace(/[^A-Z0-9]/gi, '');
-        const res = await fetch(`${apiUrl}/rest/v1/excess_parts?select=part_number,quantity,vendor&part_number=ilike.*${cleaned}*`, {
-          headers: {
-            apikey: apiKey,
-            Authorization: `Bearer ${apiKey}`
-          }
+    function normalizePart(p) {
+      return p.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    }
+
+    function searchParts() {
+      const input = document.getElementById("input").value.trim().split("\n").map(p => normalizePart(p));
+      document.getElementById("results").innerHTML = "";
+      document.getElementById("summary").innerHTML = "";
+      document.getElementById("loading").style.display = "block";
+
+      fetch("https://ijzroisggstqkfhpjndq.supabase.co/rest/v1/excess_parts?select=*", {
+        headers: {
+          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc"
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        let html = "";
+        let matchCount = 0;
+        let vendors = new Set();
+        resultsData = [];
+
+        input.forEach(query => {
+          const matches = data.filter(row =>
+            normalizePart(row.part_number).includes(query)
+          );
+          matches.forEach(match => {
+            vendors.add(match.vendor);
+            matchCount++;
+            resultsData.push(match);
+            html += `<div class="result">
+              <strong>${match.part_number}</strong><br>
+              • Quantity: ${match.quantity}<br>
+              • Vendor: ${match.vendor}
+            </div>`;
+          });
         });
 
-        const data = await res.json();
-        data.forEach(result => {
-          const sim = stringSimilarity(part, result.part_number);
-          if (sim >= 70) {
-            matches.push({
-              ...result,
-              similarity: sim
-            });
-          }
-        });
-      }
+        document.getElementById("results").innerHTML = html || "<p>No matches found.</p>";
+        document.getElementById("summary").innerHTML = `
+          ✅ ${matchCount} total excess entries found<br>
+          🏷️ ${vendors.size} unique vendors matched
+        `;
+      })
+      .catch(() => alert("Error retrieving data"))
+      .finally(() => {
+        document.getElementById("loading").style.display = "none";
+      });
+    }
 
-      if (matches.length === 0) {
-        resultsDiv.innerHTML = "<p>No matching parts found.</p>";
-      } else {
-        resultsDiv.innerHTML = matches.map(m => `
-          <div class="result-card">
-            <strong>${m.part_number}</strong>
-            • Quantity: ${m.quantity}<br>
-            • Vendor: ${m.vendor}<br>
-            • Match: ${m.similarity}%
-          </div>
-        `).join("");
-      }
-    });
+    function exportResults() {
+      if (!resultsData.length) return alert("No results to export!");
+      const csv = [
+        ["Part Number", "Quantity", "Vendor"],
+        ...resultsData.map(row => [row.part_number, row.quantity, row.vendor])
+      ].map(row => row.join(",")).join("\n");
 
-    // ✅ CSV Upload + Auto-fill textarea
-    document.getElementById("csvUpload").addEventListener("change", async (e) => {
+      const blob = new Blob([csv], {type: "text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "excess_results.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("csvUpload").addEventListener("change", function(e) {
       const file = e.target.files[0];
-      if (!file) return;
-
-      const text = await file.text();
-      const lines = text.trim().split(/\\r?\\n/);
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-      const idx = headers.indexOf("part_number");
-
-      if (idx === -1) {
-        alert("Missing 'part_number' column.");
-        return;
-      }
-
-      const partNumbers = lines.slice(1)
-        .map(line => line.split(",")[idx]?.trim())
-        .filter(Boolean)
-        .join("\\n");
-
-      document.getElementById("parts").value = partNumbers;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split("\n");
+        const header = lines[0].split(",");
+        const idx = header.findIndex(h => h.trim().toLowerCase() === "part number");
+        if (idx === -1) return alert("CSV must have a 'Part Number' column");
+        const parts = lines.slice(1).map(line => line.split(",")[idx]).filter(Boolean);
+        document.getElementById("input").value = parts.join("\n");
+      };
+      reader.readAsText(file);
     });
   </script>
+
+  <p style="font-size: 12px; margin-top: 40px;">Powered by Verified Electronics · Made By Nick</p>
+
 </body>
 </html>
+
 
 
 
