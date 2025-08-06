@@ -66,6 +66,34 @@
       color: inherit;
       text-decoration: underline;
     }
+
+    #loading-bar {
+      width: 100%;
+      max-width: 500px;
+      height: 4px;
+      margin: 20px auto;
+      background-color: #ddd;
+      border-radius: 2px;
+      overflow: hidden;
+      display: none;
+    }
+
+    #loading-bar.active {
+      display: block;
+    }
+
+    #loading-bar .progress {
+      width: 0%;
+      height: 100%;
+      background-color: #007bff;
+      animation: loading 2s linear infinite;
+    }
+
+    @keyframes loading {
+      0%   { transform: translateX(-100%); width: 100%; }
+      50%  { transform: translateX(0);     width: 100%; }
+      100% { transform: translateX(100%);  width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -75,6 +103,7 @@
   <br>
   <button id="search-button">Search</button>
 
+  <div id="loading-bar"><div class="progress"></div></div>
   <div id="results"></div>
 
   <button class="toggle-btn" id="toggle-theme">Toggle Dark Mode</button>
@@ -91,7 +120,7 @@
         .split(/[\n,]+/)
         .map(p => p.trim().toUpperCase())
         .filter(p => p.length > 0)
-        .slice(0, 1000) // Limit to 1000
+        .slice(0, 1000)
     }
 
     async function searchParts(partNumbers) {
@@ -114,29 +143,6 @@
       const input = document.getElementById('part-input').value
       const partNumbers = parsePartNumbers(input)
 
-      const resultContainer = document.getElementById('results')
-      resultContainer.innerHTML = '<p>Searching...</p>'
-
-      const results = await searchParts(partNumbers)
-      resultContainer.innerHTML = ''
-
-      if (results.length === 0) {
-        resultContainer.innerHTML = `<p>No matches found.</p>`
-      } else {
-        results.forEach(item => {
-          const row = document.createElement('div')
-          row.innerHTML = `<strong>${item.part_number}</strong> — ${item.quantity} pcs (${item.vendor})`
-          resultContainer.appendChild(row)
-        })
-      }
-    })
-
-    document.getElementById('toggle-theme').addEventListener('click', () => {
-      document.body.classList.toggle('dark')
-    })
-  </script>
-</body>
-</html>
 
 
 
