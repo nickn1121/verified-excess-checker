@@ -2,78 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sales Leaderboard</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 20px;
       color: #333;
       text-align: center;
-      padding: 20px;
     }
-    img.logo {
+    .logo {
       max-width: 200px;
-      margin: 20px auto;
-      display: block;
+      margin-bottom: 20px;
     }
     h1 {
+      font-size: 32px;
       margin-bottom: 10px;
     }
-    .filters {
-      margin: 10px 0 20px;
+    select, input[type="text"], input[type="number"], input[type="date"] {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
-    select {
-      padding: 6px 12px;
-      font-size: 16px;
+    input[type="submit"] {
+      background: #6600cc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
     }
     table {
-      width: 90%;
-      max-width: 1000px;
-      margin: 0 auto;
+      width: 95%;
+      margin: 20px auto;
       border-collapse: collapse;
       background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     th, td {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
+      padding: 10px;
+      border: 1px solid #ccc;
     }
     th {
-      background: #6a0dad;
+      background-color: #6600cc;
       color: white;
     }
-    tr:hover {
-      background: #f0f0ff;
-    }
-    .medal {
-      font-size: 18px;
-    }
-    .breakdown {
-      display: none;
-      margin-top: 20px;
-    }
-    .breakdown table {
-      width: 80%;
-      margin-top: 10px;
+    .medal-1 { background-color: gold; }
+    .medal-2 { background-color: silver; }
+    .medal-3 { background-color: #cd7f32; }
+    .deal-details {
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" class="logo" />
+
+  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Logo" class="logo" />
   <h1>🏆 Sales Leaderboard</h1>
-  <div class="filters">
-    <label for="dateFilter">Filter: </label>
-    <select id="dateFilter">
-      <option value="this_week">This Week</option>
-      <option value="this_month">This Month</option>
-      <option value="last_3_months">Last 3 Months</option>
-      <option value="this_year">This Year</option>
-    </select>
-  </div>
+
+  <label for="filter">Filter:</label>
+  <select id="filter">
+    <option value="thisWeek">This Week</option>
+    <option value="thisMonth">This Month</option>
+    <option value="last3Months">Last 3 Months</option>
+    <option value="thisYear">This Year</option>
+  </select>
+
   <table id="leaderboard">
     <thead>
       <tr>
@@ -87,110 +85,114 @@
     <tbody></tbody>
   </table>
 
-  <div class="breakdown" id="dealBreakdown"></div>
+  <div id="deal-breakdown" class="deal-details"></div>
+
+  <h2>Add a Deal</h2>
+  <form action="https://docs.google.com/forms/d/e/1FAIpQLScThLrSJkNo4iiJjIEGDWCaMBL6pIlLr3K58b2SSIEsr-rNFA/formResponse" method="POST" target="hidden_iframe" onsubmit="submitted=true;">
+    <select name="entry.2005620554" required>
+      <option value="">Salesperson</option>
+      <option value="Emir">Emir</option>
+      <option value="Nick K">Nick K</option>
+      <option value="Dan">Dan</option>
+      <option value="Jake">Jake</option>
+    </select>
+    <input type="text" name="entry.1045781291" placeholder="Customer" required />
+    <input type="number" step="any" name="entry.1166974658" placeholder="Revenue" required />
+    <input type="number" step="any" name="entry.839337160" placeholder="Gross Profit" required />
+    <input type="date" name="entry.1065046570" required />
+    <input type="submit" value="Submit Deal" />
+  </form>
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQ-SBQIK1EnnNKo0E7VJaiOHhka6rbFlVlBJfpyf9cHJWRi6L14BTS7JidRu0vY7zySfzyM6ksujth/pub?output=csv";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1Os4znFkZYX0HvKcsGtwcxpzJdrt0OsRHVJW2VxKZweI/gviz/tq?tqx=out:csv";
+    let allData = [];
 
-    const parseMoney = str => parseFloat((str || '0').replace(/[^0-9.-]+/g, '').replace(',', '.')) || 0;
-    const formatMoney = num => '$' + num.toLocaleString(undefined, {minimumFractionDigits: 2});
+    function parseCurrency(val) {
+      return parseFloat((val || "").replace(/[^\\d.-]/g, "")) || 0;
+    }
 
-    function filterByDate(rows, range) {
-      const now = new Date();
-      return rows.filter(row => {
-        const date = new Date(row.Date);
-        if (isNaN(date)) return false;
+    function loadData(filter) {
+      Papa.parse(SHEET_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          const now = new Date();
+          let fromDate = new Date(now);
+          if (filter === "thisWeek") {
+            fromDate.setDate(now.getDate() - now.getDay());
+          } else if (filter === "thisMonth") {
+            fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          } else if (filter === "last3Months") {
+            fromDate.setMonth(now.getMonth() - 3);
+          } else {
+            fromDate = new Date(now.getFullYear(), 0, 1);
+          }
 
-        if (range === "this_week") {
-          const start = new Date(now);
-          start.setDate(now.getDate() - now.getDay());
-          return date >= start && date <= now;
+          allData = results.data.filter(row => {
+            const rowDate = new Date(row["Date"]);
+            return rowDate >= fromDate;
+          });
+
+          renderLeaderboard();
         }
-        if (range === "this_month") {
-          const start = new Date(now.getFullYear(), now.getMonth(), 1);
-          return date >= start && date <= now;
-        }
-        if (range === "last_3_months") {
-          const start = new Date(now);
-          start.setMonth(now.getMonth() - 3);
-          return date >= start && date <= now;
-        }
-        if (range === "this_year") {
-          const start = new Date(now.getFullYear(), 0, 1);
-          return date >= start && date <= now;
-        }
-        return true;
       });
     }
 
-    function groupBySalesperson(rows) {
-      const grouped = {};
-      for (let row of rows) {
-        const name = row.Salesperson?.trim();
-        if (!name) continue;
-        if (!grouped[name]) grouped[name] = { revenue: 0, gp: 0, deals: [], count: 0 };
-        grouped[name].revenue += parseMoney(row.Revenue);
-        grouped[name].gp += parseMoney(row['Gross Profit']);
-        grouped[name].deals.push(row);
-        grouped[name].count++;
-      }
-      return Object.entries(grouped).map(([name, data]) => ({ name, ...data }));
-    }
+    function renderLeaderboard() {
+      const stats = {};
+      allData.forEach(row => {
+        const name = row["Salesperson"];
+        const revenue = parseCurrency(row["Revenue"]);
+        const gp = parseCurrency(row["Gross Profit"]);
+        if (!stats[name]) stats[name] = { revenue: 0, gp: 0, deals: 0, entries: [] };
+        stats[name].revenue += revenue;
+        stats[name].gp += gp;
+        stats[name].deals += 1;
+        stats[name].entries.push(row);
+      });
 
-    function renderTable(data) {
+      const sorted = Object.entries(stats)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.gp - a.gp);
+
       const tbody = document.querySelector("#leaderboard tbody");
       tbody.innerHTML = "";
-      data.sort((a, b) => b.gp - a.gp).forEach((person, idx) => {
-        const tr = document.createElement("tr");
-        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx + 1;
-        tr.innerHTML = `
-          <td class="medal">${medal}</td>
-          <td><a href="#" onclick="showDeals('${person.name}')">${person.name}</a></td>
-          <td>${formatMoney(person.revenue)}</td>
-          <td>${formatMoney(person.gp)}</td>
-          <td>${person.count}</td>
+      sorted.forEach((person, index) => {
+        const row = document.createElement("tr");
+        if (index === 0) row.classList.add("medal-1");
+        else if (index === 1) row.classList.add("medal-2");
+        else if (index === 2) row.classList.add("medal-3");
+
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td><a href="#" onclick="showBreakdown('${person.name}'); return false;">${person.name}</a></td>
+          <td>$${person.revenue.toFixed(2)}</td>
+          <td>$${person.gp.toFixed(2)}</td>
+          <td>${person.deals}</td>
         `;
-        tbody.appendChild(tr);
+        tbody.appendChild(row);
       });
     }
 
-    function showDeals(name) {
-      const deals = allRows.filter(r => r.Salesperson === name);
-      const div = document.getElementById("dealBreakdown");
-      div.innerHTML = `<h2>Deals for ${name}</h2>
-        <table>
-          <thead><tr><th>Date</th><th>Customer</th><th>Revenue</th><th>Gross Profit</th></tr></thead>
-          <tbody>${deals.map(d => `
-            <tr>
-              <td>${d.Date}</td>
-              <td>${d.Customer}</td>
-              <td>${formatMoney(parseMoney(d.Revenue))}</td>
-              <td>${formatMoney(parseMoney(d['Gross Profit']))}</td>
-            </tr>
-          `).join('')}</tbody>
-        </table>`;
-      div.style.display = "block";
+    function showBreakdown(name) {
+      const person = allData.filter(row => row["Salesperson"] === name);
+      let html = `<h3>Deals for ${name}</h3><table><tr><th>Date</th><th>Customer</th><th>Revenue</th><th>GP</th></tr>`;
+      person.forEach(row => {
+        html += `<tr><td>${row["Date"]}</td><td>${row["Customer"]}</td><td>$${row["Revenue"]}</td><td>$${row["Gross Profit"]}</td></tr>`;
+      });
+      html += "</table>";
+      document.getElementById("deal-breakdown").innerHTML = html;
     }
 
-    let allRows = [];
-
-    Papa.parse(SHEET_URL, {
-      download: true,
-      header: true,
-      complete: function(results) {
-        allRows = results.data;
-        const filter = document.getElementById("dateFilter").value;
-        const filtered = filterByDate(allRows, filter);
-        renderTable(groupBySalesperson(filtered));
-      }
+    document.getElementById("filter").addEventListener("change", (e) => {
+      loadData(e.target.value);
     });
 
-    document.getElementById("dateFilter").addEventListener("change", () => {
-      const filtered = filterByDate(allRows, document.getElementById("dateFilter").value);
-      renderTable(groupBySalesperson(filtered));
-      document.getElementById("dealBreakdown").style.display = "none";
-    });
+    window.onload = () => loadData("thisWeek");
   </script>
+
 </body>
 </html>
+
 
