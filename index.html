@@ -21,7 +21,7 @@
       background: var(--bg-light);
       color: var(--text-light);
       padding: 40px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       text-align: center;
       transition: background 0.3s, color 0.3s;
@@ -32,18 +32,14 @@
       color: var(--text-dark);
     }
 
-    input, button {
+    textarea, button {
       padding: 10px;
       font-size: 16px;
       margin: 8px 0;
       width: 90%;
-      max-width: 400px;
+      max-width: 500px;
       border-radius: 6px;
       border: 1px solid #999;
-    }
-
-    button {
-      cursor: pointer;
     }
 
     #results div {
@@ -73,9 +69,10 @@
   </style>
 </head>
 <body>
-  <h2>Excess Part Checker</h2>
+  <h2>Multi-Part Excess Checker</h2>
 
-  <input type="text" id="part-input" placeholder="Enter part number">
+  <textarea id="part-input" rows="6" placeholder="Paste part numbers here...&#10;One per line or comma separated"></textarea>
+  <br>
   <button id="search-button">Search</button>
 
   <div id="results"></div>
@@ -89,11 +86,21 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    async function searchParts(query) {
+    function parsePartNumbers(input) {
+      return input
+        .split(/[\n,]+/)
+        .map(p => p.trim().toUpperCase())
+        .filter(p => p.length > 0)
+        .slice(0, 1000) // Limit to 1000
+    }
+
+    async function searchParts(partNumbers) {
+      if (partNumbers.length === 0) return []
+
       const { data, error } = await supabase
         .from('excess_parts')
         .select('*')
-        .ilike('part_number', `%${query}%`)
+        .in('part_number', partNumbers)
 
       if (error) {
         console.error('Supabase error:', error)
@@ -104,10 +111,13 @@
     }
 
     document.getElementById('search-button').addEventListener('click', async () => {
-      const input = document.getElementById('part-input').value.trim()
-      const results = await searchParts(input)
+      const input = document.getElementById('part-input').value
+      const partNumbers = parsePartNumbers(input)
 
       const resultContainer = document.getElementById('results')
+      resultContainer.innerHTML = '<p>Searching...</p>'
+
+      const results = await searchParts(partNumbers)
       resultContainer.innerHTML = ''
 
       if (results.length === 0) {
@@ -121,14 +131,13 @@
       }
     })
 
-    // 🌗 Dark Mode Toggle
-    const toggleBtn = document.getElementById('toggle-theme')
-    toggleBtn.addEventListener('click', () => {
+    document.getElementById('toggle-theme').addEventListener('click', () => {
       document.body.classList.toggle('dark')
     })
   </script>
 </body>
 </html>
+
 
 
 
