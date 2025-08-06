@@ -2,190 +2,189 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Excess Part Number Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Excess Part Checker</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      color: #333;
-      padding: 30px;
-      max-width: 700px;
-      margin: auto;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
       text-align: center;
     }
     img.logo {
       max-width: 220px;
-      height: auto;
       margin-bottom: 20px;
     }
     h1 {
-      font-size: 26px;
-      margin-bottom: 10px;
+      font-size: 24px;
+      color: #333;
     }
     textarea, input[type="file"] {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
+      width: 80%;
+      padding: 10px;
+      margin: 10px auto;
       font-size: 16px;
+      display: block;
     }
     button {
-      background-color: #6a42d6;
+      background-color: #4A90E2;
       color: white;
       border: none;
       padding: 12px 24px;
+      margin-top: 10px;
       font-size: 16px;
-      margin-top: 15px;
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 4px;
     }
-    .result, .summary {
-      background: #fff;
-      margin: 20px auto;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: left;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    button:hover {
+      background-color: #357ABD;
     }
-    .loading {
-      font-style: italic;
-      margin-top: 10px;
+    .spinner {
       display: none;
+      margin: 20px auto;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
     }
-    .dark-mode {
-      background-color: #121212;
-      color: #eee;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    .dark-mode textarea, .dark-mode .result {
-      background: #1e1e1e;
-      color: #eee;
-    }
-    .dark-mode button {
-      background-color: #915eff;
-    }
-    .toggle-dark {
-      margin-top: 10px;
+    .results {
+      margin-top: 20px;
+      text-align: left;
       display: inline-block;
-      font-size: 14px;
-      color: #666;
-      cursor: pointer;
-      text-decoration: underline;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
-
-  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" class="logo" alt="Verified Electronics Logo">
-
+  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/d4ab2ffa9937dd6ea5b322809e0cd522673c4356/logo.png" class="logo" alt="Verified Electronics Logo">
   <h1>✅ Excess Part Number Checker</h1>
-  <p><strong>Paste your part numbers (one per line):</strong></p>
-  <textarea id="input" rows="6" placeholder="Example:\nMCP1623T-I/CHY\nPS-65-24"></textarea>
-  
-  <input type="file" id="csvUpload" accept=".csv" />
-  <p><small>CSV must contain a column with header <code>Part Number</code></small></p>
+  <p>Paste part numbers (one per line) or upload a CSV with 'Part Number' column</p>
+  <textarea id="partInput" placeholder="Enter or paste part numbers..."></textarea>
+  <input type="file" id="csvFile" accept=".csv">
+  <button onclick="checkExcess()">Check Excess</button>
+  <div class="spinner" id="loadingSpinner"></div>
+  <div id="results" class="results" style="display:none;"></div>
+<script>
+const SUPABASE_API = "https://ijzroisggstqkfhpjndq.supabase.co/rest/v1/excess_parts";
+const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // your full key
 
-  <button onclick="searchParts()">🔍 Check Excess</button>
-  <div class="loading" id="loading">🔄 Searching...</div>
-  
-  <div id="summary" class="summary"></div>
-  <div id="results"></div>
+function normalize(str) {
+  return str.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
 
-  <button onclick="exportResults()">⬇ Export to CSV</button>
+function similarity(a, b) {
+  let matches = 0;
+  const len = Math.min(a.length, b.length);
+  for (let i = 0; i < len; i++) if (a[i] === b[i]) matches++;
+  return matches / Math.max(a.length, b.length);
+}
 
-  <div class="toggle-dark" onclick="toggleDark()">Toggle Dark Mode</div>
+async function fetchDatabaseParts() {
+  const res = await fetch(SUPABASE_API, {
+    headers: { apikey: API_KEY }
+  });
+  return await res.json();
+}
 
-  <script>
-    let resultsData = [];
+function parseCSV(text) {
+  const lines = text.split(/\\r?\\n/);
+  const header = lines[0].split(",");
+  const index = header.findIndex(h => h.toLowerCase().includes("part"));
+  if (index === -1) return [];
+  return lines.slice(1).map(l => l.split(",")[index]?.trim()).filter(Boolean);
+}
+async function checkExcess() {
+  const spinner = document.getElementById("loadingSpinner");
+  const resultsBox = document.getElementById("results");
+  spinner.style.display = "block";
+  resultsBox.style.display = "none";
 
-    function toggleDark() {
-      document.body.classList.toggle("dark-mode");
+  const dbParts = await fetchDatabaseParts();
+  const dbMap = {};
+  dbParts.forEach(p => {
+    const norm = normalize(p.part_number);
+    if (!dbMap[norm]) dbMap[norm] = p;
+  });
+
+  let inputParts = document.getElementById("partInput").value.split(/\\r?\\n/).map(p => p.trim()).filter(Boolean);
+  const file = document.getElementById("csvFile").files[0];
+  if (file) {
+    const text = await file.text();
+    inputParts = inputParts.concat(parseCSV(text));
+  }
+
+  const matches = [];
+  const seen = new Set();
+  const vendors = new Set();
+
+  inputParts.forEach(p => {
+    const normInput = normalize(p);
+    let bestScore = 0;
+    let bestMatch = null;
+
+    for (const normDb in dbMap) {
+      const score = similarity(normInput, normDb);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = dbMap[normDb];
+      }
     }
 
-    function normalizePart(p) {
-      return p.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    if (bestScore >= 0.85 && bestMatch && !seen.has(bestMatch.part_number)) {
+      seen.add(bestMatch.part_number);
+      vendors.add(bestMatch.vendor);
+      matches.push({ ...bestMatch, match_score: (bestScore * 100).toFixed(1) + "%" });
     }
+  });
 
-    function searchParts() {
-      const input = document.getElementById("input").value.trim().split("\n").map(p => normalizePart(p));
-      document.getElementById("results").innerHTML = "";
-      document.getElementById("summary").innerHTML = "";
-      document.getElementById("loading").style.display = "block";
+  let html = `<strong>Total Matches:</strong> ${matches.length}<br><strong>Unique Vendors:</strong> ${vendors.size}<br><br>`;
+  matches.forEach(m => {
+    html += `
+      <div style="border-bottom:1px solid #ccc; margin-bottom:10px; padding-bottom:10px;">
+        <strong>${m.part_number}</strong><br>
+        Quantity: ${m.quantity}<br>
+        Vendor: ${m.vendor}<br>
+        Match Score: <em>${m.match_score}</em>
+      </div>
+    `;
+  });
 
-      fetch("https://ijzroisggstqkfhpjndq.supabase.co/rest/v1/excess_parts?select=*", {
-        headers: {
-          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc"
-        }
-      })
-      .then(r => r.json())
-      .then(data => {
-        let html = "";
-        let matchCount = 0;
-        let vendors = new Set();
-        resultsData = [];
+  if (matches.length) {
+    const csv = "Part Number,Quantity,Vendor,Match Score\\n" + matches.map(m =>
+      [m.part_number, m.quantity, m.vendor, m.match_score].join(",")
+    ).join("\\n");
+    html += `<button onclick="downloadCSV()">Download CSV</button>`;
+    window.csvData = csv;
+  }
 
-        input.forEach(query => {
-          const matches = data.filter(row =>
-            normalizePart(row.part_number).includes(query)
-          );
-          matches.forEach(match => {
-            vendors.add(match.vendor);
-            matchCount++;
-            resultsData.push(match);
-            html += `<div class="result">
-              <strong>${match.part_number}</strong><br>
-              • Quantity: ${match.quantity}<br>
-              • Vendor: ${match.vendor}
-            </div>`;
-          });
-        });
+  resultsBox.innerHTML = html;
+  resultsBox.style.display = "block";
+  spinner.style.display = "none";
+}
 
-        document.getElementById("results").innerHTML = html || "<p>No matches found.</p>";
-        document.getElementById("summary").innerHTML = `
-          ✅ ${matchCount} total excess entries found<br>
-          🏷️ ${vendors.size} unique vendors matched
-        `;
-      })
-      .catch(() => alert("Error retrieving data"))
-      .finally(() => {
-        document.getElementById("loading").style.display = "none";
-      });
-    }
-
-    function exportResults() {
-      if (!resultsData.length) return alert("No results to export!");
-      const csv = [
-        ["Part Number", "Quantity", "Vendor"],
-        ...resultsData.map(row => [row.part_number, row.quantity, row.vendor])
-      ].map(row => row.join(",")).join("\n");
-
-      const blob = new Blob([csv], {type: "text/csv"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "excess_results.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    document.getElementById("csvUpload").addEventListener("change", function(e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const lines = e.target.result.split("\n");
-        const header = lines[0].split(",");
-        const idx = header.findIndex(h => h.trim().toLowerCase() === "part number");
-        if (idx === -1) return alert("CSV must have a 'Part Number' column");
-        const parts = lines.slice(1).map(line => line.split(",")[idx]).filter(Boolean);
-        document.getElementById("input").value = parts.join("\n");
-      };
-      reader.readAsText(file);
-    });
-  </script>
-
-  <p style="font-size: 12px; margin-top: 40px;">Powered by Verified Electronics · Made By Nick</p>
-
+function downloadCSV() {
+  const blob = new Blob([window.csvData], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "excess_results.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
 </body>
 </html>
+
 
 
 
