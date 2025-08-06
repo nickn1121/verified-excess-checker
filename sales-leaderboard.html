@@ -2,74 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sales Leaderboard</title>
+  <title>Sales Leaderboard – Verified Electronics</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f6f6f6;
+      background: #f5f5f5;
       margin: 0;
-      padding: 20px;
-      color: #333;
+      padding: 30px;
       text-align: center;
     }
-    .logo {
-      max-width: 200px;
-      margin-bottom: 20px;
-    }
-    h1 {
-      font-size: 32px;
+    img.logo {
+      width: 180px;
       margin-bottom: 10px;
     }
-    select, input[type="text"], input[type="number"], input[type="date"] {
-      padding: 8px;
-      margin: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    input[type="submit"] {
-      background: #6600cc;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
+    h1 {
+      color: #333;
     }
     table {
-      width: 95%;
+      width: 90%;
       margin: 20px auto;
       border-collapse: collapse;
-      background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 12px;
+      border: 1px solid #ddd;
     }
     th {
-      background-color: #6600cc;
+      background-color: #6a0dad;
       color: white;
     }
-    .medal-1 { background-color: gold; }
-    .medal-2 { background-color: silver; }
-    .medal-3 { background-color: #cd7f32; }
-    .deal-details {
-      margin-top: 30px;
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+    select, input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    .medal {
+      font-size: 1.4em;
+    }
+    .form-container {
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      border: 2px solid #6a0dad;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 8px;
+    }
+    .form-container h2 {
+      margin-top: 0;
+      color: #6a0dad;
+    }
+    .form-inline input, .form-inline select {
+      width: 20%;
+      padding: 8px;
+    }
+    .form-inline {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .form-inline button {
+      background: #6a0dad;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .form-inline button:hover {
+      background: #501187;
     }
   </style>
 </head>
 <body>
-
-  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Logo" class="logo" />
+  <img class="logo" src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/3ec40a34ac5cdadcac6cf7ddccc4bd098faa4736/logo.png" alt="Verified Electronics Logo">
   <h1>🏆 Sales Leaderboard</h1>
 
-  <label for="filter">Filter:</label>
+  <label for="filter">Filter: </label>
   <select id="filter">
-    <option value="thisWeek">This Week</option>
-    <option value="thisMonth">This Month</option>
-    <option value="last3Months">Last 3 Months</option>
-    <option value="thisYear">This Year</option>
+    <option value="this_week">This Week</option>
+    <option value="this_month">This Month</option>
+    <option value="last_3_months">Last 3 Months</option>
+    <option value="this_year">This Year</option>
   </select>
 
   <table id="leaderboard">
@@ -85,114 +102,117 @@
     <tbody></tbody>
   </table>
 
-  <div id="deal-breakdown" class="deal-details"></div>
+  <div class="form-container">
+    <h2>Add New Deal</h2>
+    <form id="dealForm" target="hidden_iframe" onsubmit="submitDeal(); return false;" class="form-inline">
+      <select name="entry.1164492433" required>
+        <option value="">Select Salesperson</option>
+        <option value="Emir">Emir</option>
+        <option value="Nick K">Nick K</option>
+        <option value="Dan">Dan</option>
+        <option value="Jake">Jake</option>
+      </select>
+      <input type="text" name="entry.716116426" placeholder="Customer" required>
+      <input type="text" name="entry.839127155" placeholder="Revenue" required>
+      <input type="text" name="entry.2044729058" placeholder="Gross Profit" required>
+      <input type="date" name="entry.2090091395" required>
+      <button type="submit">Submit Deal</button>
+    </form>
+    <iframe name="hidden_iframe" style="display:none;"></iframe>
+  </div>
 
-  <h2>Add a Deal</h2>
-  <form action="https://docs.google.com/forms/d/e/1FAIpQLScThLrSJkNo4iiJjIEGDWCaMBL6pIlLr3K58b2SSIEsr-rNFA/formResponse" method="POST" target="hidden_iframe" onsubmit="submitted=true;">
-    <select name="entry.2005620554" required>
-      <option value="">Salesperson</option>
-      <option value="Emir">Emir</option>
-      <option value="Nick K">Nick K</option>
-      <option value="Dan">Dan</option>
-      <option value="Jake">Jake</option>
-    </select>
-    <input type="text" name="entry.1045781291" placeholder="Customer" required />
-    <input type="number" step="any" name="entry.1166974658" placeholder="Revenue" required />
-    <input type="number" step="any" name="entry.839337160" placeholder="Gross Profit" required />
-    <input type="date" name="entry.1065046570" required />
-    <input type="submit" value="Submit Deal" />
-  </form>
-  <iframe name="hidden_iframe" style="display:none;"></iframe>
-
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script>
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/1Os4znFkZYX0HvKcsGtwcxpzJdrt0OsRHVJW2VxKZweI/gviz/tq?tqx=out:csv";
-    let allData = [];
 
-    function parseCurrency(val) {
-      return parseFloat((val || "").replace(/[^\\d.-]/g, "")) || 0;
-    }
+    const parseCurrency = value => {
+      return parseFloat(
+        value.replace(/[^0-9.,-]/g, '').replace(',', '.')
+      ) || 0;
+    };
 
-    function loadData(filter) {
+    const getWeekStart = () => {
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(now.setDate(diff));
+    };
+
+    const getStartDate = (filter) => {
+      const today = new Date();
+      switch (filter) {
+        case 'this_week': return getWeekStart();
+        case 'this_month': return new Date(today.getFullYear(), today.getMonth(), 1);
+        case 'last_3_months': return new Date(today.getFullYear(), today.getMonth() - 2, 1);
+        case 'this_year': return new Date(today.getFullYear(), 0, 1);
+        default: return new Date(0);
+      }
+    };
+
+    function loadLeaderboard() {
       Papa.parse(SHEET_URL, {
         download: true,
         header: true,
         complete: function(results) {
-          const now = new Date();
-          let fromDate = new Date(now);
-          if (filter === "thisWeek") {
-            fromDate.setDate(now.getDate() - now.getDay());
-          } else if (filter === "thisMonth") {
-            fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          } else if (filter === "last3Months") {
-            fromDate.setMonth(now.getMonth() - 3);
-          } else {
-            fromDate = new Date(now.getFullYear(), 0, 1);
-          }
+          const data = results.data;
+          const filter = document.getElementById("filter").value;
+          const startDate = getStartDate(filter);
+          const grouped = {};
 
-          allData = results.data.filter(row => {
-            const rowDate = new Date(row["Date"]);
-            return rowDate >= fromDate;
+          data.forEach(row => {
+            const salesperson = row["Salesperson"];
+            const date = new Date(row["Date"]);
+            if (!salesperson || isNaN(date)) return;
+            if (date < startDate) return;
+
+            const revenue = parseCurrency(row["Revenue"]);
+            const profit = parseCurrency(row["Gross Profit"]);
+
+            if (!grouped[salesperson]) {
+              grouped[salesperson] = { revenue: 0, profit: 0, deals: 0 };
+            }
+
+            grouped[salesperson].revenue += revenue;
+            grouped[salesperson].profit += profit;
+            grouped[salesperson].deals += 1;
           });
 
-          renderLeaderboard();
+          const sorted = Object.entries(grouped).sort((a, b) => b[1].profit - a[1].profit);
+          const tbody = document.querySelector("#leaderboard tbody");
+          tbody.innerHTML = "";
+
+          sorted.forEach(([name, stats], index) => {
+            const tr = document.createElement("tr");
+            const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1;
+            tr.innerHTML = `
+              <td class="medal">${medal}</td>
+              <td>${name}</td>
+              <td>$${stats.revenue.toLocaleString()}</td>
+              <td>$${stats.profit.toLocaleString()}</td>
+              <td>${stats.deals}</td>
+            `;
+            tbody.appendChild(tr);
+          });
         }
       });
     }
 
-    function renderLeaderboard() {
-      const stats = {};
-      allData.forEach(row => {
-        const name = row["Salesperson"];
-        const revenue = parseCurrency(row["Revenue"]);
-        const gp = parseCurrency(row["Gross Profit"]);
-        if (!stats[name]) stats[name] = { revenue: 0, gp: 0, deals: 0, entries: [] };
-        stats[name].revenue += revenue;
-        stats[name].gp += gp;
-        stats[name].deals += 1;
-        stats[name].entries.push(row);
-      });
+    document.getElementById("filter").addEventListener("change", loadLeaderboard);
+    window.addEventListener("load", loadLeaderboard);
 
-      const sorted = Object.entries(stats)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => b.gp - a.gp);
-
-      const tbody = document.querySelector("#leaderboard tbody");
-      tbody.innerHTML = "";
-      sorted.forEach((person, index) => {
-        const row = document.createElement("tr");
-        if (index === 0) row.classList.add("medal-1");
-        else if (index === 1) row.classList.add("medal-2");
-        else if (index === 2) row.classList.add("medal-3");
-
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td><a href="#" onclick="showBreakdown('${person.name}'); return false;">${person.name}</a></td>
-          <td>$${person.revenue.toFixed(2)}</td>
-          <td>$${person.gp.toFixed(2)}</td>
-          <td>${person.deals}</td>
-        `;
-        tbody.appendChild(row);
+    function submitDeal() {
+      const form = document.getElementById("dealForm");
+      const formData = new FormData(form);
+      const url = "https://docs.google.com/forms/d/e/1FAIpQLScThLrSJkNo4iiJjIEGDWCaMBL6pIlLr3K58b2SSIEsr-rNFA/formResponse";
+      fetch(url, { method: "POST", mode: "no-cors", body: formData }).then(() => {
+        alert("Deal submitted!");
+        form.reset();
+        setTimeout(loadLeaderboard, 2000);
       });
     }
-
-    function showBreakdown(name) {
-      const person = allData.filter(row => row["Salesperson"] === name);
-      let html = `<h3>Deals for ${name}</h3><table><tr><th>Date</th><th>Customer</th><th>Revenue</th><th>GP</th></tr>`;
-      person.forEach(row => {
-        html += `<tr><td>${row["Date"]}</td><td>${row["Customer"]}</td><td>$${row["Revenue"]}</td><td>$${row["Gross Profit"]}</td></tr>`;
-      });
-      html += "</table>";
-      document.getElementById("deal-breakdown").innerHTML = html;
-    }
-
-    document.getElementById("filter").addEventListener("change", (e) => {
-      loadData(e.target.value);
-    });
-
-    window.onload = () => loadData("thisWeek");
   </script>
-
 </body>
 </html>
+
 
 
