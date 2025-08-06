@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales Leaderboard – Verified Electronics</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 40px 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .logo {
+      display: block;
+      max-width: 180px;
+      margin: 0 auto 30px;
+      border-radius: 12px;
+      box-shadow: 0px 0px 8px rgba(126, 46, 235, 0.2);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      margin-bottom: 20px;
+      color: #7E2EEB;
+    }
+
+    .filters {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .filters button {
+      margin: 0 5px;
+      padding: 10px 16px;
+      font-size: 14px;
+      border: 1px solid #7E2EEB;
+      border-radius: 6px;
+      background: white;
+      color: #7E2EEB;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .filters button.active,
+    .filters button:hover {
+      background: #7E2EEB;
+      color: white;
+    }
+
+    .leaderboard {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border: 2px solid #7E2EEB;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      transition: 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(126, 46, 235, 0.15);
+    }
+
+    .rank {
+      font-size: 24px;
+      width: 40px;
+      text-align: center;
+    }
+
+    .info {
+      flex: 1;
+      padding-left: 15px;
+    }
+
+    .info h2 {
+      margin: 0 0 5px;
+      font-size: 20px;
+    }
+
+    .info p {
+      margin: 3px 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .medal {
+      font-size: 24px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img src="logo.png" alt="Verified Electronics Logo" class="logo" />
+    <h1>🏆 Sales Leaderboard</h1>
+
+    <div class="filters">
+      <button data-range="week" class="active">This Week</button>
+      <button data-range="month">This Month</button>
+      <button data-range="3months">Last 3 Months</button>
+      <button data-range="year">This Year</button>
+    </div>
+
+    <div class="leaderboard" id="leaderboard"></div>
+  </div>
+
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQ-SBQIK1EnnNKo0E7VJaiOHhka6rbFlVlBJfpyf9cHJWRi6L14BTS7JidRu0vY7zySfzyM6ksujth/pub?output=csv";
+
+    const filters = document.querySelectorAll(".filters button");
+    filters.forEach(btn => btn.addEventListener("click", () => {
+      filters.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadLeaderboard(btn.dataset.range);
+    }));
+
+    function parseDate(str) {
+      const [y, m, d] = str.split("-");
+      return new Date(+y, m - 1, +d);
+    }
+
+    function isInRange(date, range) {
+      const now = new Date();
+      const d = new Date(date);
+      switch (range) {
+        case "week":
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          return d >= startOfWeek;
+        case "month":
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        case "3months":
+          const threeMonthsAgo = new Date(now);
+          threeMonthsAgo.setMonth(now.getMonth() - 3);
+          return d >= threeMonthsAgo;
+        case "year":
+          return d.getFullYear() === now.getFullYear();
+        default:
+          return true;
+      }
+    }
+
+    async function loadLeaderboard(filterRange = "week") {
+      const res = await fetch(sheetURL);
+      const csv = await res.text();
+      const rows = csv.trim().split("\n").slice(1);
+      const data = {};
+
+      for (const row of rows) {
+        const [salesperson, customer, revenue, gp, date] = row.split(",");
+        const name = salesperson.trim();
+        const rev = parseFloat(revenue.replace(/\$/g, "").replace(/,/g, "")) || 0;
+        const gross = parseFloat(gp.replace(/\$/g, "").replace(/,/g, "")) || 0;
+
+        if (!isInRange(date.trim(), filterRange)) continue;
+
+        if (!data[name]) {
+          data[name] = { name, revenue: 0, gp: 0, deals: 0 };
+        }
+
+        data[name].revenue += rev;
+        data[name].gp += gross;
+        data[name].deals += 1;
+      }
+
+      const sorted = Object.values(data).sort((a, b) => b.revenue - a.revenue);
+      const medals = ["🥇", "🥈", "🥉"];
+      const container = document.getElementById("leaderboard");
+      container.innerHTML = "";
+
+      sorted.forEach((entry, i) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const rank = document.createElement("div");
+        rank.className = "rank";
+        rank.textContent = i + 1;
+
+        const info = document.createElement("div");
+        info.className = "info";
+        info.innerHTML = `
+          <h2>${entry.name}</h2>
+          <p>Revenue: $${entry.revenue.toLocaleString()}</p>
+          <p>Gross Profit: $${entry.gp.toLocaleString()}</p>
+          <p>Deals: ${entry.deals}</p>
+        `;
+
+        const medal = document.createElement("div");
+        medal.className = "medal";
+        medal.textContent = medals[i] || "";
+
+        card.appendChild(rank);
+        card.appendChild(info);
+        card.appendChild(medal);
+        container.appendChild(card);
+      });
+
+      if (sorted.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color: #777;">No results for this time range.</p>`;
+      }
+    }
+
+    loadLeaderboard();
+  </script>
+
+</body>
+</html>
