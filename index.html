@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Excess Part Number Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f9f9f9;
       padding: 40px;
-      max-width: 700px;
+      max-width: 650px;
       margin: auto;
       text-align: center;
     }
 
     img.logo {
-      max-width: 180px;
-      height: auto;
-      margin-bottom: 10px;
+      max-width: 200px;
+      margin-bottom: 12px;
     }
 
     h1 {
@@ -25,240 +24,130 @@
       color: #333;
     }
 
-    textarea {
-      width: 100%;
-      height: 200px;
-      margin-bottom: 15px;
-      padding: 10px;
-      font-family: monospace;
-    }
-
-    input[type="file"] {
+    textarea, input[type="file"], button {
+      width: 90%;
+      max-width: 450px;
       margin: 10px 0;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
 
     button {
-      padding: 12px 20px;
-      background-color: #6c4ed2;
+      background: #673ab7;
       color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
     }
 
-    button:disabled {
-      background-color: #999;
+    .leaderboard {
+      background: #eee;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .footer {
+      font-size: 12px;
+      margin-top: 30px;
+      color: #888;
     }
 
     .result {
       background: #fff;
-      margin: 10px auto;
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-      text-align: left;
-    }
-
-    .summary {
-      background: #e6ffe6;
-      padding: 10px;
-      margin-top: 20px;
-      border: 1px solid #b2d8b2;
-      border-radius: 6px;
-    }
-
-    .stats-box {
-      background: #fff;
       border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 30px;
-      text-align: left;
-    }
-
-    .dark-mode {
-      background: #121212;
-      color: #fff;
-    }
-
-    .dark-mode .result {
-      background: #1e1e1e;
-    }
-
-    .dark-mode .stats-box {
-      background: #1e1e1e;
-      border-color: #444;
-    }
-
-    .toggle-btn {
-      background: none;
-      border: none;
-      text-decoration: underline;
-      color: #555;
-      font-size: 14px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-
-    .loader {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #6c4ed2;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-      margin-left: 8px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg);}
-      100% { transform: rotate(360deg);}
-    }
-
-    footer {
-      margin-top: 40px;
-      color: #aaa;
-      font-size: 13px;
+      padding: 10px;
+      margin: 10px auto;
+      border-radius: 6px;
+      max-width: 500px;
     }
   </style>
 </head>
 <body>
-  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Verified Logo" class="logo" />
+  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" class="logo" alt="Verified Logo">
   <h1>✅ Excess Part Number Checker</h1>
-  <p><strong>Paste your part numbers (one per line):</strong></p>
 
-  <div class="stats-box" id="live-stats">
-    <strong>📊 Loading live stats...</strong>
+  <div class="leaderboard" id="stats">
+    📊 <strong>Live Excess Inventory:</strong><br>
+    • Total Part Numbers: <strong id="total-parts">...</strong><br>
+    • Unique Vendors: <strong id="unique-vendors">...</strong>
   </div>
 
-  <textarea id="partNumbers" placeholder="Paste or type part numbers here..."></textarea>
+  <textarea id="part-input" rows="8" placeholder="Paste your part numbers here (one per line)"></textarea><br>
+  <input type="file" id="csv-file"><br>
+  <p style="font-size: 13px;">CSV must contain a column with header <code>Part Number</code></p>
 
-  <input type="file" id="csvFile" accept=".csv" />
-  <p>CSV must contain a column with header <code>Part Number</code></p>
+  <button id="search-button">🔍 Check Excess</button>
 
-  <button id="checkBtn">🔍 Check Excess</button>
-
-  <div class="summary" id="summaryBox" style="display:none;"></div>
   <div id="results"></div>
 
-  <button id="exportBtn" style="margin-top: 20px; display:none;">⬇ Export to CSV</button>
-  <button class="toggle-btn" id="toggleMode">Toggle Dark Mode</button>
-
-  <footer>
-    Powered by Verified Electronics · Made By Nick
-  </footer>
+  <div class="footer">Powered by Verified Electronics · Made By Nick</div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const supabase = createClient(
-      'https://ijzroisggstqkfhpjndq.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc'
-    );
+    const supabaseUrl = 'https://ijzroisggstqkfhpjndq.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc'
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const textInput = document.getElementById('partNumbers');
-    const csvInput = document.getElementById('csvFile');
-    const checkBtn = document.getElementById('checkBtn');
-    const resultsDiv = document.getElementById('results');
-    const summaryBox = document.getElementById('summaryBox');
-    const exportBtn = document.getElementById('exportBtn');
-    const statsBox = document.getElementById('live-stats');
-
-    async function loadStats() {
-      const { data, error } = await supabase.from('excess_parts').select('part_number, vendor');
-      if (error) {
-        statsBox.innerHTML = "<p>❌ Error loading stats.</p>";
-        return;
+    const getStats = async () => {
+      const { data, error } = await supabase.from('excess_parts').select('part_number,vendor')
+      if (data) {
+        document.getElementById('total-parts').textContent = data.length.toLocaleString()
+        const vendors = [...new Set(data.map(d => d.vendor.trim()))]
+        document.getElementById('unique-vendors').textContent = vendors.length.toLocaleString()
       }
-
-      const totalLines = data.length;
-      const uniqueVendors = [...new Set(data.map(row => row.vendor))].length;
-
-      statsBox.innerHTML = `
-        <strong>📊 Live Excess Inventory:</strong><br>
-        • Total Part Numbers: <b>${totalLines}</b><br>
-        • Unique Vendors: <b>${uniqueVendors}</b>
-      `;
     }
 
-    loadStats();
+    getStats()
 
-    async function fetchExcess(partNumbers) {
-      const { data, error } = await supabase.from('excess_parts').select('*');
-      if (error) {
-        alert('Error fetching data.');
-        return [];
-      }
+    const normalize = s => s.replace(/[\s\-\/]/g, '').toUpperCase()
 
-      const formatted = partNumbers.map(p => p.trim().toLowerCase()).filter(Boolean);
-      return data.filter(row => formatted.includes(row.part_number.trim().toLowerCase()));
+    const searchParts = async (queries) => {
+      const cleaned = queries.map(q => normalize(q)).filter(Boolean)
+      if (cleaned.length === 0) return []
+
+      const { data, error } = await supabase.from('excess_parts').select('*')
+      if (error || !data) return []
+
+      return data.filter(row => cleaned.includes(normalize(row.part_number)))
     }
 
-    async function handleCheck() {
-      resultsDiv.innerHTML = '';
-      summaryBox.style.display = 'none';
-      exportBtn.style.display = 'none';
-      checkBtn.innerHTML = 'Checking... <span class="loader"></span>';
-      checkBtn.disabled = true;
+    document.getElementById('search-button').addEventListener('click', async () => {
+      const textarea = document.getElementById('part-input').value
+      const lines = textarea.split('\n').map(l => l.trim())
+      const results = await searchParts(lines)
 
-      let parts = textInput.value.split('\n');
-      if (csvInput.files.length > 0) {
-        const csv = await csvInput.files[0].text();
-        const lines = csv.split('\n');
-        const header = lines[0].split(',');
-        const partIdx = header.findIndex(h => h.trim().toLowerCase() === 'part number');
-        if (partIdx >= 0) {
-          for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(',');
-            if (cols[partIdx]) parts.push(cols[partIdx]);
-          }
+      const resultsDiv = document.getElementById('results')
+      resultsDiv.innerHTML = ''
+
+      if (results.length === 0) {
+        resultsDiv.innerHTML = '<p>No matching parts found.</p>'
+      } else {
+        const grouped = {}
+        for (const item of results) {
+          const pn = item.part_number.toUpperCase()
+          if (!grouped[pn]) grouped[pn] = []
+          grouped[pn].push(item)
+        }
+
+        for (const part in grouped) {
+          const vendors = grouped[part]
+          const box = document.createElement('div')
+          box.className = 'result'
+          box.innerHTML = `
+            <strong>${part}</strong><br>
+            • Matches: ${vendors.length}<br>
+            ${vendors.map(v => `• ${v.vendor} — ${v.quantity} pcs`).join('<br>')}
+          `
+          resultsDiv.appendChild(box)
         }
       }
-
-      const results = await fetchExcess(parts);
-      if (results.length === 0) {
-        resultsDiv.innerHTML = `<p>No matching parts found.</p>`;
-        checkBtn.innerHTML = '🔍 Check Excess';
-        checkBtn.disabled = false;
-        return;
-      }
-
-      const vendorSet = new Set();
-      results.forEach(r => {
-        vendorSet.add(r.vendor);
-        const div = document.createElement('div');
-        div.className = 'result';
-        div.innerHTML = `<strong>${r.part_number}</strong><br>• Quantity: ${r.quantity}<br>• Vendor: ${r.vendor}`;
-        resultsDiv.appendChild(div);
-      });
-
-      summaryBox.innerHTML = `✅ <strong>${results.length}</strong> total excess entries found<br>🏷 <strong>${vendorSet.size}</strong> unique vendors matched`;
-      summaryBox.style.display = 'block';
-      exportBtn.style.display = 'inline-block';
-
-      exportBtn.onclick = () => {
-        const csv = "Part Number,Quantity,Vendor\n" + results.map(r => `${r.part_number},${r.quantity},${r.vendor}`).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'excess_results.csv';
-        a.click();
-      };
-
-      checkBtn.innerHTML = '🔍 Check Excess';
-      checkBtn.disabled = false;
-    }
-
-    checkBtn.addEventListener('click', handleCheck);
-
-    document.getElementById('toggleMode').addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-    });
+    })
   </script>
 </body>
 </html>
+
 
 
 
