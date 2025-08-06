@@ -2,153 +2,122 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Excess Part Number Checker</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Excess Part Checker</title>
   <style>
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f4f4;
-      color: #222;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 20px;
-      transition: background 0.3s, color 0.3s;
+      background-color: #f9fafb;
+      color: #1f2937;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
     }
-
-    body.dark {
-      background-color: #121212;
-      color: #eee;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: auto;
-      text-align: center;
-    }
-
-    img.logo {
-      max-width: 160px;
-      margin-bottom: 15px;
-    }
-
     h1 {
       font-size: 28px;
       font-weight: 700;
       margin-bottom: 10px;
     }
-
-    label {
-      font-weight: 600;
-    }
-
     textarea {
       width: 100%;
-      height: 150px;
-      padding: 10px;
-      margin-top: 10px;
+      max-width: 600px;
+      height: 160px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
       font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      resize: vertical;
+      margin-bottom: 16px;
     }
-
-    .button {
-      background-color: #5e3bee;
+    input[type="file"] {
+      margin: 10px auto;
+    }
+    .upload-instructions {
+      font-size: 14px;
+      color: #555;
+      max-width: 600px;
+      margin: 10px auto;
+      text-align: center;
+    }
+    button {
+      background-color: #4f46e5;
       color: white;
-      font-weight: 600;
-      padding: 10px 25px;
+      padding: 12px 24px;
+      font-size: 16px;
       border: none;
       border-radius: 6px;
-      margin-top: 20px;
       cursor: pointer;
-      transition: background 0.3s;
+      margin-top: 10px;
     }
-
-    .button:hover {
-      background-color: #4a2ed4;
+    button:hover {
+      background-color: #4338ca;
     }
-
-    .toggle {
-      margin-top: 15px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #777;
-    }
-
-    .toggle:hover {
-      color: #333;
-    }
-
-    .card {
+    .result-card {
       background: white;
       padding: 16px;
-      margin: 16px 0;
+      margin-top: 16px;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      text-align: left;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 600px;
     }
-
-    body.dark .card {
-      background-color: #1e1e1e;
-      color: #ddd;
-      border: 1px solid #333;
+    .result-card strong {
+      font-size: 18px;
+      display: block;
+      margin-bottom: 4px;
     }
-
-    .summary {
-      font-size: 16px;
-      font-weight: 500;
-      margin-top: 25px;
-      text-align: left;
-    }
-
     .footer {
-      margin-top: 30px;
-      font-size: 13px;
-      color: #777;
-    }
-
-    .footer a {
-      color: inherit;
+      margin-top: 40px;
+      font-size: 14px;
+      color: #6b7280;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Verified Electronics Logo" class="logo">
-    <h1>✅ Excess Part Number Checker</h1>
-    <label for="partInput">Paste your part numbers (one per line):</label>
-    <textarea id="partInput" placeholder="e.g. TPS5430, XC7Z010, 2902992"></textarea>
-    <br>
-    <button class="button" onclick="checkParts()">🔍 Check Excess</button>
-    <div class="toggle" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</div>
+  <h1>Excess Part Number Checker</h1>
 
-    <div id="summary" class="summary"></div>
-    <div id="results"></div>
-
-    <div class="footer">
-      Powered by <strong>Verified Electronics</strong> · Made by Nick · <a href="https://github.com/nickn1121/verified-excess-checker" target="_blank">GitHub</a>
-    </div>
+  <!-- ✅ CSV Upload Input -->
+  <input type="file" id="csvUpload" accept=".csv" />
+  <div class="upload-instructions">
+    Upload a <code>.csv</code> file with a single column called <strong>part_number</strong>.<br>
+    Other columns will be ignored.
   </div>
+
+  <!-- ✅ Textarea input still supported -->
+  <textarea id="parts" placeholder="Or paste part numbers here, one per line..."></textarea>
+
+  <button id="searchBtn">Search</button>
+  <div id="results"></div>
+  <div class="footer">Powered by Verified Electronics</div>
 
   <script type="module">
     const apiUrl = "https://ijzroisggstqkfhpjndq.supabase.co";
     const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc";
 
-    async function checkParts() {
-      const input = document.getElementById("partInput").value.trim();
-      const parts = [...new Set(input.split("\n").map(p => p.trim().toUpperCase().replace(/[^A-Z0-9]/gi, "")))].filter(Boolean);
+    // 🔁 Fuzzy string similarity (basic)
+    const stringSimilarity = (a, b) => {
+      a = a.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      b = b.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      let matches = 0;
+      for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        if (a[i] === b[i]) matches++;
+      }
+      return Math.round((matches / Math.max(a.length, b.length)) * 100);
+    };
 
-      if (!parts.length) return;
-
+    // ✅ Run search
+    document.getElementById("searchBtn").addEventListener("click", async () => {
+      const input = document.getElementById("parts").value;
+      const parts = input.split('\\n').map(p => p.trim()).filter(p => p !== "");
       const resultsDiv = document.getElementById("results");
-      const summaryDiv = document.getElementById("summary");
-      resultsDiv.innerHTML = "Searching...";
-      summaryDiv.innerHTML = "";
+      resultsDiv.innerHTML = "<p>Searching...</p>";
 
       const matches = [];
 
       for (const part of parts) {
-        const res = await fetch(`${apiUrl}/rest/v1/excess_parts?select=part_number,quantity,vendor&part_number=ilike.*${part}*`, {
+        const cleaned = part.replace(/[^A-Z0-9]/gi, '');
+        const res = await fetch(`${apiUrl}/rest/v1/excess_parts?select=part_number,quantity,vendor&part_number=ilike.*${cleaned}*`, {
           headers: {
             apikey: apiKey,
             Authorization: `Bearer ${apiKey}`
@@ -156,32 +125,58 @@
         });
 
         const data = await res.json();
-        data.forEach(match => matches.push(match));
+        data.forEach(result => {
+          const sim = stringSimilarity(part, result.part_number);
+          if (sim >= 70) {
+            matches.push({
+              ...result,
+              similarity: sim
+            });
+          }
+        });
       }
 
-      if (!matches.length) {
-        resultsDiv.innerHTML = "<p>No matches found.</p>";
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = "<p>No matching parts found.</p>";
+      } else {
+        resultsDiv.innerHTML = matches.map(m => `
+          <div class="result-card">
+            <strong>${m.part_number}</strong>
+            • Quantity: ${m.quantity}<br>
+            • Vendor: ${m.vendor}<br>
+            • Match: ${m.similarity}%
+          </div>
+        `).join("");
+      }
+    });
+
+    // ✅ CSV Upload + Auto-fill textarea
+    document.getElementById("csvUpload").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const text = await file.text();
+      const lines = text.trim().split(/\\r?\\n/);
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+      const idx = headers.indexOf("part_number");
+
+      if (idx === -1) {
+        alert("Missing 'part_number' column.");
         return;
       }
 
-      const vendors = [...new Set(matches.map(m => m.vendor))];
-      summaryDiv.innerHTML = `📦 <strong>${matches.length}</strong> matching line(s) from <strong>${vendors.length}</strong> unique vendor(s).`;
+      const partNumbers = lines.slice(1)
+        .map(line => line.split(",")[idx]?.trim())
+        .filter(Boolean)
+        .join("\\n");
 
-      resultsDiv.innerHTML = matches.map(m => `
-        <div class="card">
-          <strong>${m.part_number}</strong><br>
-          • Quantity: ${m.quantity}<br>
-          • Vendor: ${m.vendor}
-        </div>
-      `).join("");
-    }
-
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark");
-    }
+      document.getElementById("parts").value = partNumbers;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   </script>
 </body>
 </html>
+
 
 
 
