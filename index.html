@@ -2,193 +2,183 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Excess Part Number Checker</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
   <style>
     body {
-      font-family: Georgia, serif;
-      background-color: #f9f9f9;
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f4f4;
+      color: #222;
       margin: 0;
       padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark {
+      background-color: #121212;
+      color: #eee;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
       text-align: center;
     }
 
-    .logo {
-      max-width: 180px;
-      margin-bottom: 20px;
+    img.logo {
+      max-width: 160px;
+      margin-bottom: 15px;
     }
 
     h1 {
-      color: #333;
+      font-size: 28px;
+      font-weight: 700;
       margin-bottom: 10px;
-    }
-
-    h1::before {
-      content: '✅ ';
-      color: green;
     }
 
     label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 10px;
+      font-weight: 600;
     }
 
     textarea {
       width: 100%;
-      max-width: 500px;
-      height: 120px;
-      font-size: 16px;
+      height: 150px;
       padding: 10px;
-      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 16px;
       border: 1px solid #ccc;
+      border-radius: 6px;
       resize: vertical;
     }
 
-    button {
-      margin-top: 15px;
-      padding: 12px 24px;
-      font-size: 16px;
-      background-color: #6c4ad4;
-      color: #fff;
+    .button {
+      background-color: #5e3bee;
+      color: white;
+      font-weight: 600;
+      padding: 10px 25px;
       border: none;
       border-radius: 6px;
+      margin-top: 20px;
       cursor: pointer;
+      transition: background 0.3s;
     }
 
-    button:hover {
-      background-color: #593bc1;
+    .button:hover {
+      background-color: #4a2ed4;
     }
 
-    .result {
-      margin: 20px auto;
-      padding: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      max-width: 500px;
-      background-color: #fff;
+    .toggle {
+      margin-top: 15px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #777;
+    }
+
+    .toggle:hover {
+      color: #333;
+    }
+
+    .card {
+      background: white;
+      padding: 16px;
+      margin: 16px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       text-align: left;
     }
 
-    .result strong {
-      display: block;
-      font-size: 18px;
-      margin-bottom: 5px;
+    body.dark .card {
+      background-color: #1e1e1e;
+      color: #ddd;
+      border: 1px solid #333;
     }
 
-    footer {
-      margin-top: 40px;
+    .summary {
+      font-size: 16px;
+      font-weight: 500;
+      margin-top: 25px;
+      text-align: left;
+    }
+
+    .footer {
+      margin-top: 30px;
       font-size: 13px;
-      color: #888;
+      color: #777;
     }
 
-    #loading-bar {
-      width: 100%;
-      max-width: 500px;
-      height: 4px;
-      background-color: #e0e0e0;
-      margin: 20px auto 0;
-      border-radius: 4px;
-      overflow: hidden;
-      display: none;
-    }
-
-    #loading-bar .progress {
-      width: 100%;
-      height: 100%;
-      background-color: #6c4ad4;
-      animation: loading 1.5s infinite;
-    }
-
-    @keyframes loading {
-      0%   { transform: translateX(-100%); }
-      50%  { transform: translateX(0); }
-      100% { transform: translateX(100%); }
+    .footer a {
+      color: inherit;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Verified Electronics Logo" class="logo">
+    <h1>✅ Excess Part Number Checker</h1>
+    <label for="partInput">Paste your part numbers (one per line):</label>
+    <textarea id="partInput" placeholder="e.g. TPS5430, XC7Z010, 2902992"></textarea>
+    <br>
+    <button class="button" onclick="checkParts()">🔍 Check Excess</button>
+    <div class="toggle" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</div>
 
-  <!-- ✅ Working GitHub-Hosted Logo -->
-  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" alt="Verified Electronics Logo" class="logo" />
+    <div id="summary" class="summary"></div>
+    <div id="results"></div>
 
-  <h1>Excess Part Number Checker</h1>
-
-  <label for="part-input">Paste your part numbers (one per line):</label>
-  <textarea id="part-input" placeholder="e.g.&#10;TPR431B-S3TR&#10;LPL0813T-101K"></textarea>
-  <br />
-  <button id="search-button">🔍 Check Excess</button>
-
-  <div id="loading-bar"><div class="progress"></div></div>
-
-  <div id="results"></div>
-
-  <footer>
-    Powered by Verified Electronics · Made By Nick
-  </footer>
+    <div class="footer">
+      Powered by <strong>Verified Electronics</strong> · Made by Nick · <a href="https://github.com/nickn1121/verified-excess-checker" target="_blank">GitHub</a>
+    </div>
+  </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    const apiUrl = "https://ijzroisggstqkfhpjndq.supabase.co";
+    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc";
 
-    const supabaseUrl = 'https://ijzroisggstqkfhpjndq.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc'
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    async function checkParts() {
+      const input = document.getElementById("partInput").value.trim();
+      const parts = [...new Set(input.split("\n").map(p => p.trim().toUpperCase().replace(/[^A-Z0-9]/gi, "")))].filter(Boolean);
 
-    const input = document.getElementById('part-input')
-    const resultsDiv = document.getElementById('results')
-    const loadingBar = document.getElementById('loading-bar')
+      if (!parts.length) return;
 
-    function parsePartNumbers(inputText) {
-      return inputText
-        .split(/[\n,]+/)
-        .map(p => p.trim().toUpperCase())
-        .filter(p => p.length > 0)
-        .slice(0, 1000)
-    }
+      const resultsDiv = document.getElementById("results");
+      const summaryDiv = document.getElementById("summary");
+      resultsDiv.innerHTML = "Searching...";
+      summaryDiv.innerHTML = "";
 
-    async function searchParts(partNumbers) {
-      if (partNumbers.length === 0) return []
+      const matches = [];
 
-      const { data, error } = await supabase
-        .from('excess_parts')
-        .select('*')
-        .in('part_number', partNumbers)
+      for (const part of parts) {
+        const res = await fetch(`${apiUrl}/rest/v1/excess_parts?select=part_number,quantity,vendor&part_number=ilike.*${part}*`, {
+          headers: {
+            apikey: apiKey,
+            Authorization: `Bearer ${apiKey}`
+          }
+        });
 
-      if (error) {
-        console.error('Supabase error:', error)
-        return []
+        const data = await res.json();
+        data.forEach(match => matches.push(match));
       }
 
-      return data
-    }
-
-    document.getElementById('search-button').addEventListener('click', async () => {
-      const rawInput = input.value
-      const partNumbers = parsePartNumbers(rawInput)
-
-      resultsDiv.innerHTML = ''
-      loadingBar.style.display = 'block'
-
-      const results = await searchParts(partNumbers)
-
-      loadingBar.style.display = 'none'
-
-      if (results.length === 0) {
-        resultsDiv.innerHTML = '<p>No matches found.</p>'
-        return
+      if (!matches.length) {
+        resultsDiv.innerHTML = "<p>No matches found.</p>";
+        return;
       }
 
-      results.forEach(item => {
-        const card = document.createElement('div')
-        card.className = 'result'
-        card.innerHTML = `
-          <strong>${item.part_number}</strong>
-          • Quantity: ${item.quantity}<br/>
-          • Vendor: ${item.vendor}
-        `
-        resultsDiv.appendChild(card)
-      })
-    })
+      const vendors = [...new Set(matches.map(m => m.vendor))];
+      summaryDiv.innerHTML = `📦 <strong>${matches.length}</strong> matching line(s) from <strong>${vendors.length}</strong> unique vendor(s).`;
+
+      resultsDiv.innerHTML = matches.map(m => `
+        <div class="card">
+          <strong>${m.part_number}</strong><br>
+          • Quantity: ${m.quantity}<br>
+          • Vendor: ${m.vendor}
+        </div>
+      `).join("");
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
   </script>
 </body>
 </html>
