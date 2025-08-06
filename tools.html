@@ -90,6 +90,15 @@
       transform: translateX(4px);
     }
 
+    iframe#dinoGame {
+      width: 100%;
+      height: 300px;
+      border: none;
+      margin-top: 60px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
     @media (max-width: 900px) {
       .dashboard {
         flex-direction: column;
@@ -111,6 +120,7 @@
       <div class="category">
         <h2>🟪 Excess</h2>
         <a class="tool-button" href="index.html">📦 Excess Part Checker</a>
+        <a class="tool-button" href="add-excess.html">➕ Add Excess Parts</a>
       </div>
 
       <!-- Sales Column -->
@@ -118,6 +128,8 @@
         <h2>🟦 Sales</h2>
         <a class="tool-button" href="sales-leaderboard.html">📈 Sales Leaderboard</a>
         <a class="tool-button" href="#">📝 Sales Tracker (coming soon)</a>
+        <a class="tool-button" href="rfq-logger.html">🧾 RFQ Logger</a>
+        <a class="tool-button" href="active-deals.html">🔄 Active Deals</a>
       </div>
 
       <!-- Stats Column -->
@@ -134,6 +146,9 @@
       </div>
 
     </div>
+
+    <!-- Dino Game -->
+    <iframe id="dinoGame" src="https://offline-dino-game.firebaseapp.com/"></iframe>
 
   </div>
 
@@ -152,8 +167,10 @@
       }
     }
   </script>
+
 </body>
 </html>
+
 
 
 
