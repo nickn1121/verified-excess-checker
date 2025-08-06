@@ -83,7 +83,7 @@
 
   <div class="info-box" id="stats">
     <p>📊 <strong>Live Excess Inventory:</strong><br>
-    • Total Part Numbers: <span id="total-parts">Loading...</span><br>
+    • Total Part Numbers: <strong>70,024</strong><br>
     • Unique Vendors: <span id="unique-vendors">Loading...</span></p>
   </div>
 
@@ -111,13 +111,12 @@
     async function loadStats() {
       const { data, error } = await supabase
         .from('excess_parts')
-        .select('vendor, part_number');
+        .select('vendor');
 
       if (error) return console.error('Stats error:', error);
 
       const uniqueVendors = new Set(data.map(d => d.vendor));
       document.getElementById('unique-vendors').innerText = uniqueVendors.size;
-      document.getElementById('total-parts').innerText = data.length;
     }
 
     loadStats();
@@ -193,6 +192,7 @@
   </script>
 </body>
 </html>
+
 
 
 
