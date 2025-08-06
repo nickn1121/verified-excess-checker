@@ -1,45 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Excess Part Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    :root {
+      --bg-light: #f9f9f9;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #fff;
+      --card-light: #fff;
+      --card-dark: #1e1e1e;
+      --border-light: #ccc;
+      --border-dark: #333;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
+      background: var(--bg-light);
+      color: var(--text-light);
+      padding: 40px;
+      max-width: 700px;
+      margin: auto;
       text-align: center;
+      transition: background 0.3s, color 0.3s;
     }
-    img.logo {
-      max-width: 220px;
-      margin-bottom: 20px;
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
     }
-    h1 {
-      font-size: 24px;
-      color: #333;
-    }
-    textarea, input[type="file"] {
-      width: 80%;
+
+    textarea, button {
       padding: 10px;
+      font-size: 16px;
+      margin: 8px 0;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 6px;
+      border: 1px solid #999;
+    }
+
+    #results div {
       margin: 10px auto;
-      font-size: 16px;
-      display: block;
+      padding: 12px;
+      background: var(--card-light);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      max-width: 100%;
+      transition: background 0.3s, border 0.3s;
     }
-    button {
-      background-color: #4A90E2;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      margin-top: 10px;
-      font-size: 16px;
+
+    body.dark #results div {
+      background: var(--card-dark);
+      border: 1px solid var(--border-dark);
+    }
+
+    .toggle-btn {
+      margin-top: 20px;
+      font-size: 14px;
       cursor: pointer;
-      border-radius: 4px;
+      background: none;
+      border: none;
+      color: inherit;
+      text-decoration: underline;
     }
-    button:hover {
-      background-color: #357ABD;
-    }
+
     .spinner {
       display: none;
       margin: 20px auto;
@@ -50,140 +77,118 @@
       height: 36px;
       animation: spin 1s linear infinite;
     }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .results {
-      margin-top: 20px;
-      text-align: left;
-      display: inline-block;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-    }
   </style>
 </head>
 <body>
-  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/d4ab2ffa9937dd6ea5b322809e0cd522673c4356/logo.png" class="logo" alt="Verified Electronics Logo">
-  <h1>✅ Excess Part Number Checker</h1>
-  <p>Paste part numbers (1 per line) or upload a CSV with 'Part Number' column</p>
-  <textarea id="partInput" placeholder="Enter or paste part numbers..."></textarea>
-  <input type="file" id="csvFile" accept=".csv">
-  <button onclick="checkExcess()">Check Excess</button>
-  <div class="spinner" id="loadingSpinner"></div>
-  <div id="results" class="results" style="display:none;"></div>
-<script>
-const SUPABASE_API = "https://ijzroisggstqkfhpjndq.supabase.co/rest/v1/excess_parts";
-const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // your full key
+  <h2>✅ Excess Part Checker</h2>
 
-function normalize(str) {
-  return str.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-}
+  <textarea id="part-input" placeholder="Enter one or more part numbers, separated by new lines..."></textarea>
+  <button id="search-button">Check Excess</button>
+  <div class="spinner" id="spinner"></div>
 
-function similarity(a, b) {
-  let matches = 0;
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) if (a[i] === b[i]) matches++;
-  return matches / Math.max(a.length, b.length);
-}
+  <div id="results"></div>
 
-async function fetchDatabaseParts() {
-  const res = await fetch(SUPABASE_API, {
-    headers: { apikey: API_KEY }
-  });
-  return await res.json();
-}
+  <button class="toggle-btn" id="toggle-theme">Toggle Dark Mode</button>
 
-function parseCSV(text) {
-  const lines = text.split(/\\r?\\n/);
-  const header = lines[0].split(",");
-  const index = header.findIndex(h => h.toLowerCase().includes("part"));
-  if (index === -1) return [];
-  return lines.slice(1).map(l => l.split(",")[index]?.trim()).filter(Boolean);
-}
-async function checkExcess() {
-  const spinner = document.getElementById("loadingSpinner");
-  const resultsBox = document.getElementById("results");
-  spinner.style.display = "block";
-  resultsBox.style.display = "none";
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  const dbParts = await fetchDatabaseParts();
-  const dbMap = {};
-  dbParts.forEach(p => {
-    const norm = normalize(p.part_number);
-    if (!dbMap[norm]) dbMap[norm] = p;
-  });
+    const supabase = createClient(
+      'https://ijzroisggstqkfhpjndq.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc'
+    );
 
-  let inputParts = document.getElementById("partInput").value.split(/\\r?\\n/).map(p => p.trim()).filter(Boolean);
-  const file = document.getElementById("csvFile").files[0];
-  if (file) {
-    const text = await file.text();
-    inputParts = inputParts.concat(parseCSV(text));
-  }
+    const normalize = (str) => str.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
-  const matches = [];
-  const seen = new Set();
-  const vendors = new Set();
+    const similarity = (a, b) => {
+      let matches = 0;
+      const len = Math.min(a.length, b.length);
+      for (let i = 0; i < len; i++) if (a[i] === b[i]) matches++;
+      return matches / Math.max(a.length, b.length);
+    };
 
-  inputParts.forEach(p => {
-    const normInput = normalize(p);
-    let bestScore = 0;
-    let bestMatch = null;
-
-    for (const normDb in dbMap) {
-      const score = similarity(normInput, normDb);
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = dbMap[normDb];
+    async function fetchAllParts() {
+      const { data, error } = await supabase.from('excess_parts').select('*');
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        return [];
       }
+      return data;
     }
 
-    if (bestScore >= 0.85 && bestMatch && !seen.has(bestMatch.part_number)) {
-      seen.add(bestMatch.part_number);
-      vendors.add(bestMatch.vendor);
-      matches.push({ ...bestMatch, match_score: (bestScore * 100).toFixed(1) + "%" });
+    async function searchParts(inputParts) {
+      const allParts = await fetchAllParts();
+      const dbMap = {};
+      allParts.forEach(p => dbMap[normalize(p.part_number)] = p);
+
+      const seen = new Set();
+      const results = [];
+
+      inputParts.forEach(raw => {
+        const inputNorm = normalize(raw);
+        let bestScore = 0;
+        let bestMatch = null;
+
+        for (const normDb in dbMap) {
+          const score = similarity(inputNorm, normDb);
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = dbMap[normDb];
+          }
+        }
+
+        if (bestScore >= 0.85 && bestMatch && !seen.has(bestMatch.part_number)) {
+          seen.add(bestMatch.part_number);
+          results.push({
+            ...bestMatch,
+            matchScore: (bestScore * 100).toFixed(1) + "%"
+          });
+        }
+      });
+
+      return results;
     }
-  });
 
-  let html = `<strong>Total Matches:</strong> ${matches.length}<br><strong>Unique Vendors:</strong> ${vendors.size}<br><br>`;
-  matches.forEach(m => {
-    html += `
-      <div style="border-bottom:1px solid #ccc; margin-bottom:10px; padding-bottom:10px;">
-        <strong>${m.part_number}</strong><br>
-        Quantity: ${m.quantity}<br>
-        Vendor: ${m.vendor}<br>
-        Match Score: <em>${m.match_score}</em>
-      </div>
-    `;
-  });
+    document.getElementById('search-button').addEventListener('click', async () => {
+      const spinner = document.getElementById('spinner');
+      spinner.style.display = 'block';
 
-  if (matches.length) {
-    const csv = "Part Number,Quantity,Vendor,Match Score\\n" + matches.map(m =>
-      [m.part_number, m.quantity, m.vendor, m.match_score].join(",")
-    ).join("\\n");
-    html += `<button onclick="downloadCSV()">Download CSV</button>`;
-    window.csvData = csv;
-  }
+      const input = document.getElementById('part-input').value.trim();
+      const parts = input.split(/\r?\n/).map(p => p.trim()).filter(Boolean);
+      const results = await searchParts(parts);
 
-  resultsBox.innerHTML = html;
-  resultsBox.style.display = "block";
-  spinner.style.display = "none";
-}
+      const resultContainer = document.getElementById('results');
+      resultContainer.innerHTML = '';
 
-function downloadCSV() {
-  const blob = new Blob([window.csvData], { type: "text/csv" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "excess_results.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-</script>
+      if (results.length === 0) {
+        resultContainer.innerHTML = `<p>No matches found.</p>`;
+      } else {
+        results.forEach(item => {
+          const row = document.createElement('div');
+          row.innerHTML = `
+            <strong>${item.part_number}</strong><br>
+            ${item.quantity} pcs — ${item.vendor}<br>
+            Match Score: <em>${item.matchScore}</em>
+          `;
+          resultContainer.appendChild(row);
+        });
+      }
+
+      spinner.style.display = 'none';
+    });
+
+    document.getElementById('toggle-theme').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+    });
+  </script>
 </body>
 </html>
+
 
 
 
