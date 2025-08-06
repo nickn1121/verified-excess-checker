@@ -2,224 +2,195 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sales Leaderboard – Verified Electronics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales Leaderboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 40px 20px;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
       color: #333;
+      text-align: center;
+      padding: 20px;
     }
-
-    .container {
-      max-width: 1000px;
-      margin: auto;
-    }
-
-    .logo {
+    img.logo {
+      max-width: 200px;
+      margin: 20px auto;
       display: block;
-      max-width: 180px;
-      margin: 0 auto 30px;
-      border-radius: 12px;
-      box-shadow: 0px 0px 8px rgba(126, 46, 235, 0.2);
     }
-
     h1 {
-      text-align: center;
-      font-size: 30px;
-      margin-bottom: 20px;
-      color: #7E2EEB;
+      margin-bottom: 10px;
     }
-
     .filters {
-      text-align: center;
-      margin-bottom: 20px;
+      margin: 10px 0 20px;
     }
-
-    .filters button {
-      margin: 0 5px;
-      padding: 10px 16px;
-      font-size: 14px;
-      border: 1px solid #7E2EEB;
-      border-radius: 6px;
+    select {
+      padding: 6px 12px;
+      font-size: 16px;
+    }
+    table {
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto;
+      border-collapse: collapse;
       background: white;
-      color: #7E2EEB;
-      cursor: pointer;
-      transition: 0.2s ease;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
-    .filters button.active,
-    .filters button:hover {
-      background: #7E2EEB;
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #6a0dad;
       color: white;
     }
-
-    .leaderboard {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    tr:hover {
+      background: #f0f0ff;
     }
-
-    .card {
-      background: white;
-      border: 2px solid #7E2EEB;
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      transition: 0.3s ease;
-    }
-
-    .card:hover {
-      box-shadow: 0 4px 12px rgba(126, 46, 235, 0.15);
-    }
-
-    .rank {
-      font-size: 24px;
-      width: 40px;
-      text-align: center;
-    }
-
-    .info {
-      flex: 1;
-      padding-left: 15px;
-    }
-
-    .info h2 {
-      margin: 0 0 5px;
-      font-size: 20px;
-    }
-
-    .info p {
-      margin: 3px 0;
-      font-size: 14px;
-      color: #555;
-    }
-
     .medal {
-      font-size: 24px;
-      margin-right: 10px;
+      font-size: 18px;
+    }
+    .breakdown {
+      display: none;
+      margin-top: 20px;
+    }
+    .breakdown table {
+      width: 80%;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <img src="logo.png" alt="Verified Electronics Logo" class="logo" />
-    <h1>🏆 Sales Leaderboard</h1>
-
-    <div class="filters">
-      <button data-range="week" class="active">This Week</button>
-      <button data-range="month">This Month</button>
-      <button data-range="3months">Last 3 Months</button>
-      <button data-range="year">This Year</button>
-    </div>
-
-    <div class="leaderboard" id="leaderboard"></div>
+  <img src="https://raw.githubusercontent.com/nickn1121/verified-excess-checker/main/logo.png" class="logo" />
+  <h1>🏆 Sales Leaderboard</h1>
+  <div class="filters">
+    <label for="dateFilter">Filter: </label>
+    <select id="dateFilter">
+      <option value="this_week">This Week</option>
+      <option value="this_month">This Month</option>
+      <option value="last_3_months">Last 3 Months</option>
+      <option value="this_year">This Year</option>
+    </select>
   </div>
+  <table id="leaderboard">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Salesperson</th>
+        <th>Revenue</th>
+        <th>Gross Profit</th>
+        <th>Deals</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="breakdown" id="dealBreakdown"></div>
 
   <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQ-SBQIK1EnnNKo0E7VJaiOHhka6rbFlVlBJfpyf9cHJWRi6L14BTS7JidRu0vY7zySfzyM6ksujth/pub?output=csv";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQ-SBQIK1EnnNKo0E7VJaiOHhka6rbFlVlBJfpyf9cHJWRi6L14BTS7JidRu0vY7zySfzyM6ksujth/pub?output=csv";
 
-    const filters = document.querySelectorAll(".filters button");
-    filters.forEach(btn => btn.addEventListener("click", () => {
-      filters.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      loadLeaderboard(btn.dataset.range);
-    }));
+    const parseMoney = str => parseFloat((str || '0').replace(/[^0-9.-]+/g, '').replace(',', '.')) || 0;
+    const formatMoney = num => '$' + num.toLocaleString(undefined, {minimumFractionDigits: 2});
 
-    function parseDate(str) {
-      const [y, m, d] = str.split("-");
-      return new Date(+y, m - 1, +d);
-    }
-
-    function isInRange(date, range) {
+    function filterByDate(rows, range) {
       const now = new Date();
-      const d = new Date(date);
-      switch (range) {
-        case "week":
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
-          return d >= startOfWeek;
-        case "month":
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        case "3months":
-          const threeMonthsAgo = new Date(now);
-          threeMonthsAgo.setMonth(now.getMonth() - 3);
-          return d >= threeMonthsAgo;
-        case "year":
-          return d.getFullYear() === now.getFullYear();
-        default:
-          return true;
-      }
-    }
+      return rows.filter(row => {
+        const date = new Date(row.Date);
+        if (isNaN(date)) return false;
 
-    async function loadLeaderboard(filterRange = "week") {
-      const res = await fetch(sheetURL);
-      const csv = await res.text();
-      const rows = csv.trim().split("\n").slice(1);
-      const data = {};
-
-      for (const row of rows) {
-        const [salesperson, customer, revenue, gp, date] = row.split(",");
-        const name = salesperson.trim();
-        const rev = parseFloat(revenue.replace(/\$/g, "").replace(/,/g, "")) || 0;
-        const gross = parseFloat(gp.replace(/\$/g, "").replace(/,/g, "")) || 0;
-
-        if (!isInRange(date.trim(), filterRange)) continue;
-
-        if (!data[name]) {
-          data[name] = { name, revenue: 0, gp: 0, deals: 0 };
+        if (range === "this_week") {
+          const start = new Date(now);
+          start.setDate(now.getDate() - now.getDay());
+          return date >= start && date <= now;
         }
-
-        data[name].revenue += rev;
-        data[name].gp += gross;
-        data[name].deals += 1;
-      }
-
-      const sorted = Object.values(data).sort((a, b) => b.revenue - a.revenue);
-      const medals = ["🥇", "🥈", "🥉"];
-      const container = document.getElementById("leaderboard");
-      container.innerHTML = "";
-
-      sorted.forEach((entry, i) => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const rank = document.createElement("div");
-        rank.className = "rank";
-        rank.textContent = i + 1;
-
-        const info = document.createElement("div");
-        info.className = "info";
-        info.innerHTML = `
-          <h2>${entry.name}</h2>
-          <p>Revenue: $${entry.revenue.toLocaleString()}</p>
-          <p>Gross Profit: $${entry.gp.toLocaleString()}</p>
-          <p>Deals: ${entry.deals}</p>
-        `;
-
-        const medal = document.createElement("div");
-        medal.className = "medal";
-        medal.textContent = medals[i] || "";
-
-        card.appendChild(rank);
-        card.appendChild(info);
-        card.appendChild(medal);
-        container.appendChild(card);
+        if (range === "this_month") {
+          const start = new Date(now.getFullYear(), now.getMonth(), 1);
+          return date >= start && date <= now;
+        }
+        if (range === "last_3_months") {
+          const start = new Date(now);
+          start.setMonth(now.getMonth() - 3);
+          return date >= start && date <= now;
+        }
+        if (range === "this_year") {
+          const start = new Date(now.getFullYear(), 0, 1);
+          return date >= start && date <= now;
+        }
+        return true;
       });
-
-      if (sorted.length === 0) {
-        container.innerHTML = `<p style="text-align:center; color: #777;">No results for this time range.</p>`;
-      }
     }
 
-    loadLeaderboard();
-  </script>
+    function groupBySalesperson(rows) {
+      const grouped = {};
+      for (let row of rows) {
+        const name = row.Salesperson?.trim();
+        if (!name) continue;
+        if (!grouped[name]) grouped[name] = { revenue: 0, gp: 0, deals: [], count: 0 };
+        grouped[name].revenue += parseMoney(row.Revenue);
+        grouped[name].gp += parseMoney(row['Gross Profit']);
+        grouped[name].deals.push(row);
+        grouped[name].count++;
+      }
+      return Object.entries(grouped).map(([name, data]) => ({ name, ...data }));
+    }
 
+    function renderTable(data) {
+      const tbody = document.querySelector("#leaderboard tbody");
+      tbody.innerHTML = "";
+      data.sort((a, b) => b.gp - a.gp).forEach((person, idx) => {
+        const tr = document.createElement("tr");
+        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx + 1;
+        tr.innerHTML = `
+          <td class="medal">${medal}</td>
+          <td><a href="#" onclick="showDeals('${person.name}')">${person.name}</a></td>
+          <td>${formatMoney(person.revenue)}</td>
+          <td>${formatMoney(person.gp)}</td>
+          <td>${person.count}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showDeals(name) {
+      const deals = allRows.filter(r => r.Salesperson === name);
+      const div = document.getElementById("dealBreakdown");
+      div.innerHTML = `<h2>Deals for ${name}</h2>
+        <table>
+          <thead><tr><th>Date</th><th>Customer</th><th>Revenue</th><th>Gross Profit</th></tr></thead>
+          <tbody>${deals.map(d => `
+            <tr>
+              <td>${d.Date}</td>
+              <td>${d.Customer}</td>
+              <td>${formatMoney(parseMoney(d.Revenue))}</td>
+              <td>${formatMoney(parseMoney(d['Gross Profit']))}</td>
+            </tr>
+          `).join('')}</tbody>
+        </table>`;
+      div.style.display = "block";
+    }
+
+    let allRows = [];
+
+    Papa.parse(SHEET_URL, {
+      download: true,
+      header: true,
+      complete: function(results) {
+        allRows = results.data;
+        const filter = document.getElementById("dateFilter").value;
+        const filtered = filterByDate(allRows, filter);
+        renderTable(groupBySalesperson(filtered));
+      }
+    });
+
+    document.getElementById("dateFilter").addEventListener("change", () => {
+      const filtered = filterByDate(allRows, document.getElementById("dateFilter").value);
+      renderTable(groupBySalesperson(filtered));
+      document.getElementById("dealBreakdown").style.display = "none";
+    });
+  </script>
 </body>
 </html>
+
