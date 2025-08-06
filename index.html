@@ -1,112 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Excess Part Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Excess Part Number Checker</title>
   <style>
-    :root {
-      --bg-light: #f9f9f9;
-      --bg-dark: #121212;
-      --text-light: #000;
-      --text-dark: #fff;
-      --card-light: #fff;
-      --card-dark: #1e1e1e;
-      --border-light: #ccc;
-      --border-dark: #333;
-    }
-
     body {
-      font-family: Arial, sans-serif;
-      background: var(--bg-light);
-      color: var(--text-light);
-      padding: 40px;
-      max-width: 700px;
-      margin: auto;
+      font-family: Georgia, serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
       text-align: center;
-      transition: background 0.3s, color 0.3s;
     }
 
-    body.dark {
-      background: var(--bg-dark);
-      color: var(--text-dark);
+    .logo {
+      max-width: 180px;
+      margin-bottom: 20px;
     }
 
-    textarea, button {
-      padding: 10px;
-      font-size: 16px;
-      margin: 8px 0;
-      width: 90%;
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    h1::before {
+      content: '✅ ';
+      color: green;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
       max-width: 500px;
+      height: 120px;
+      font-size: 16px;
+      padding: 10px;
       border-radius: 6px;
-      border: 1px solid #999;
+      border: 1px solid #ccc;
+      resize: vertical;
     }
 
-    #results div {
-      margin: 10px auto;
-      padding: 12px;
-      background: var(--card-light);
-      border: 1px solid var(--border-light);
-      border-radius: 6px;
-      max-width: 100%;
-      transition: background 0.3s, border 0.3s;
-    }
-
-    body.dark #results div {
-      background: var(--card-dark);
-      border: 1px solid var(--border-dark);
-    }
-
-    .toggle-btn {
-      margin-top: 20px;
-      font-size: 14px;
-      cursor: pointer;
-      background: none;
+    button {
+      margin-top: 15px;
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #6c4ad4;
+      color: #fff;
       border: none;
-      color: inherit;
-      text-decoration: underline;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #593bc1;
+    }
+
+    .result {
+      margin: 20px auto;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      max-width: 500px;
+      background-color: #fff;
+      text-align: left;
+    }
+
+    .result strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 13px;
+      color: #888;
     }
 
     #loading-bar {
       width: 100%;
       max-width: 500px;
       height: 4px;
-      margin: 20px auto;
-      background-color: #ddd;
-      border-radius: 2px;
+      background-color: #e0e0e0;
+      margin: 20px auto 0;
+      border-radius: 4px;
       overflow: hidden;
       display: none;
     }
 
-    #loading-bar.active {
-      display: block;
-    }
-
     #loading-bar .progress {
-      width: 0%;
+      width: 100%;
       height: 100%;
-      background-color: #007bff;
-      animation: loading 2s linear infinite;
+      background-color: #6c4ad4;
+      animation: loading 1.5s infinite;
     }
 
     @keyframes loading {
-      0%   { transform: translateX(-100%); width: 100%; }
-      50%  { transform: translateX(0);     width: 100%; }
-      100% { transform: translateX(100%);  width: 100%; }
+      0%   { transform: translateX(-100%); }
+      50%  { transform: translateX(0); }
+      100% { transform: translateX(100%); }
     }
   </style>
 </head>
 <body>
-  <h2>Multi-Part Excess Checker</h2>
+  <img src="https://raw.githubusercontent.com/verified-electronics/excess-tool/main/assets/logo.png" alt="Verified Electronics Logo" class="logo" />
 
-  <textarea id="part-input" rows="6" placeholder="Paste part numbers here...&#10;One per line or comma separated"></textarea>
-  <br>
-  <button id="search-button">Search</button>
+  <h1>Excess Part Number Checker</h1>
+
+  <label for="part-input">Paste your part numbers (one per line):</label>
+  <textarea id="part-input" placeholder="e.g.&#10;TPR431B-S3TR&#10;LPL0813T-101K"></textarea>
+  <br />
+  <button id="search-button">🔍 Check Excess</button>
 
   <div id="loading-bar"><div class="progress"></div></div>
+
   <div id="results"></div>
 
-  <button class="toggle-btn" id="toggle-theme">Toggle Dark Mode</button>
+  <footer>
+    Powered by Verified Electronics · Made By Nick
+  </footer>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -115,8 +132,12 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenJvaXNnZ3N0cWtmaHBqbmRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYzMjEsImV4cCI6MjA3MDA1MjMyMX0.ZqI2EiNNROR3Y7MflOeHlAY49N7b89oHA_VcEHVEwjc'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    function parsePartNumbers(input) {
-      return input
+    const input = document.getElementById('part-input')
+    const resultsDiv = document.getElementById('results')
+    const loadingBar = document.getElementById('loading-bar')
+
+    function parsePartNumbers(inputText) {
+      return inputText
         .split(/[\n,]+/)
         .map(p => p.trim().toUpperCase())
         .filter(p => p.length > 0)
@@ -140,8 +161,36 @@
     }
 
     document.getElementById('search-button').addEventListener('click', async () => {
-      const input = document.getElementById('part-input').value
-      const partNumbers = parsePartNumbers(input)
+      const rawInput = input.value
+      const partNumbers = parsePartNumbers(rawInput)
+
+      resultsDiv.innerHTML = ''
+      loadingBar.style.display = 'block'
+
+      const results = await searchParts(partNumbers)
+
+      loadingBar.style.display = 'none'
+
+      if (results.length === 0) {
+        resultsDiv.innerHTML = '<p>No matches found.</p>'
+        return
+      }
+
+      results.forEach(item => {
+        const card = document.createElement('div')
+        card.className = 'result'
+        card.innerHTML = `
+          <strong>${item.part_number}</strong>
+          • Quantity: ${item.quantity}<br/>
+          • Vendor: ${item.vendor}
+        `
+        resultsDiv.appendChild(card)
+      })
+    })
+  </script>
+</body>
+</html>
+
 
 
 
